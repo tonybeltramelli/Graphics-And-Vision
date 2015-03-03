@@ -125,7 +125,7 @@ class RegionProps:
             retVal = (-1,-1)    
         return retVal
         
-    def __calcEquivDiameter(self,contur):
+    def __calcEquivDiameter(self,m):
         Area = self.__calcArea(m)
         return np.sqrt(4*Area/np.pi)
     def __calcExtend(self,m,c):
