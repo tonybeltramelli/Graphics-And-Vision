@@ -8,21 +8,27 @@ from Filtering import *
 from RegionProps import *
 
 class Eye:
-    def __init__(self):
-        print("here")
+    _result = None
+    _right_template = None
+    _left_template = None
+
+    def __init__(self, right_corner_path, left_corner_path):
+        self._right_template = Filtering.apply_box_filter(Filtering.get_gray_scale_image(Utils.get_image(right_corner_path)), 5)
+        self._left_template = Filtering.apply_box_filter(Filtering.get_gray_scale_image(Utils.get_image(left_corner_path)), 5)
 
     def process(self, img):
+        self._result = img
+
         img = Filtering.apply_box_filter(Filtering.get_gray_scale_image(img), 5)
 
-        Utils.show(img, self.get_pupil(img, 70))
-        #Utils.show(img, self.get_glints(img, 180))
+        pupils = self.get_pupil(img, 70)
+        glints = self.get_glints(img, 180)
+        corners = self.get_eye_corners(img)
+
+        Utils.show(self._result)
 
     def get_pupil(self, img, threshold):
-        result = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY_INV)[1]
-        width, height = img.shape
-
-        #img = img[height/4:3 * (height/4), width/4:3 * (width/4)]
 
         st = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
 
@@ -32,6 +38,8 @@ class Eye:
         c, contours, hierarchy = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
         props = RegionProps()
+
+        coordinates = []
 
         for cnt in contours:
             vals = props.CalcContourProperties(cnt, ['Area', 'Length', 'Centroid', 'Extend', 'ConvexHull'])
@@ -44,36 +52,53 @@ class Eye:
 
             if ((circularity >= 0.0) and (circularity <= 1.5)) and ((vals['Area'] > 900) and (vals['Area'] < 3500)):
                 ellipse = cv2.fitEllipse(cnt)
-                cv2.ellipse(result, ellipse, (0, 255, 0), 2)
+                cv2.ellipse(self._result, ellipse, (0, 0, 255), 1)
 
                 for i, centroid in enumerate(vals['Centroid']):
                     if i == 0:
-                        tuple = int(centroid), int(vals['Centroid'][i+1])
-                        cv2.circle(result, tuple, int(radius), (0, 0, 255), 2)
+                        center = int(centroid), int(vals['Centroid'][i+1])
 
-        return result
+                        coordinates.append(center)
+                        cv2.circle(self._result, center, int(radius), (0, 0, 255), 1)
+
+        return coordinates
 
     def get_glints(self, img, threshold):
         img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY)[1]
         width, height = img.shape
 
         c, contours, hierarchy = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-        result = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
         props = RegionProps()
+
+        coordinates = []
 
         for cnt in contours:
             vals = props.CalcContourProperties(cnt, ['Area', 'Length', 'Centroid', 'Extend', 'ConvexHull'])
 
-            print(vals['Extend'])
-
-            if (vals['Area'] < 100):
+            if vals['Extend'] > 0 and vals['Area'] < 100:
                 for i, centroid in enumerate(vals['Centroid']):
                     if i == 0:
-                        tuple = int(centroid), int(vals['Centroid'][i+1])
+                        center = int(centroid), int(vals['Centroid'][i+1])
 
-                        if ((tuple[0] > width/4) and (tuple[0] < 3 * (width/4))) and ((tuple[0] > height/4) and (tuple[0] < 3 * (height/4))):
-                            cv2.circle(result, tuple, 10, (0, 0, 255), 2)
-                            cv2.circle(result, tuple, 2, (0, 255, 0), 3)
+                        if Utils.is_in_area_center(center[0], center[1], width, height):
+                            coordinates.append(center)
+                            cv2.circle(self._result, center, 2, (0, 255, 0), 3)
 
-        return result
+        return coordinates
+
+    def get_eye_corners(self, img):
+        right = self.match(img, self._right_template)
+        left = self.match(img, self._left_template)
+
+        return [right, left]
+
+    def match(self, img, template):
+        matching = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
+        width, height = template.shape
+
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(matching)
+
+        cv2.rectangle(self._result, (max_loc[0] - height/2, max_loc[1] - width/2), (max_loc[0] + height/2, max_loc[1] + width/2), 2)
+
+        return (max_loc[0], max_loc[1])
