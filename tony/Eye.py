@@ -21,7 +21,7 @@ class Eye:
 
         img = Filtering.apply_box_filter(Filtering.get_gray_scale_image(img), 5)
 
-        pupils = self.get_pupil(img, 70)
+        pupils = self.get_pupil(img, 40)
         glints = self.get_glints(img, 180)
         corners = self.get_eye_corners(img)
 
@@ -29,6 +29,8 @@ class Eye:
 
     def get_pupil(self, img, threshold):
         img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY_INV)[1]
+        width, height = img.shape
+        side = (width * height) / 8
 
         st = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
 
@@ -50,16 +52,18 @@ class Eye:
 
             circularity = perimeter / (radius * 2 * np.pi)
 
-            if ((circularity >= 0.0) and (circularity <= 1.5)) and ((vals['Area'] > 900) and (vals['Area'] < 3500)):
-                ellipse = cv2.fitEllipse(cnt)
-                cv2.ellipse(self._result, ellipse, (0, 0, 255), 1)
-
+            if ((circularity >= 0.0) and (circularity <= 1.5)) and ((vals['Area'] > 900) and (vals['Area'] < side)):
                 for i, centroid in enumerate(vals['Centroid']):
                     if i == 0:
                         center = int(centroid), int(vals['Centroid'][i+1])
 
-                        coordinates.append(center)
-                        cv2.circle(self._result, center, int(radius), (0, 0, 255), 1)
+                        if Utils.is_in_area_center(center[0], center[1], width, height):
+                            if len(cnt) >= 5:
+                                ellipse = cv2.fitEllipse(cnt)
+                                cv2.ellipse(self._result, ellipse, (0, 0, 255), 1)
+
+                            coordinates.append(center)
+                            cv2.circle(self._result, center, int(radius), (0, 0, 255), 1)
 
         return coordinates
 
