@@ -81,12 +81,9 @@ class Eye:
         x = rows.flatten()
         y = columns.flatten()
         intensity = img.flatten()
-        intensity = np.asarray([Utils.normalize(0, side * intensity_weight, i, 0, 255) for i in intensity])
-
-        print(type(intensity))
 
         features = np.zeros((len(x), 3))
-        features[:, 0] = intensity
+        features[:, 0] = intensity * intensity_weight
         features[:, 1] = y
         features[:, 2] = x
 
