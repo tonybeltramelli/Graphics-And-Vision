@@ -91,11 +91,11 @@ class Eye:
         label, distance = vq(features, centroids)
 
         labels = np.array(np.reshape(label, (width, height)))
-        labels = np.asarray([Utils.normalize(0, 255, i, 0, clusters) for i in labels])
 
-        labels = np.reshape(labels, (side, side))
-
-        Utils.show(labels)
+        f = figure(1)
+        imshow(labels)
+        f.canvas.draw()
+        f.show()
 
     def get_glints(self, img, threshold):
         img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY)[1]
