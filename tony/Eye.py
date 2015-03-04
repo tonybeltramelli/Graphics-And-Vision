@@ -142,19 +142,20 @@ class Eye:
 
         return [0, 0]
 
-    def gradient_image_info(self, img):
+    def gradient_image_info(self, img, granularity=20):
         height, width = img.shape
 
         sobel_horizontal = cv2.Sobel(img, cv2.CV_32F, 1, 0)
         sobel_vertical = cv2.Sobel(img, cv2.CV_32F, 0, 1)
 
-        angle = np.empty(img.shape)
-        magnitude = np.empty(img.shape)
-
         for y in range(height):
             for x in range(width):
-                if (x % 20 == 0) and (y % 20 == 0):
-                    angle[y][x] = cv2.fastAtan2(sobel_horizontal[y][x], sobel_vertical[y][x])
-                    magnitude[y][x] = np.sqrt((sobel_horizontal[y][x] * sobel_horizontal[y][x]) + (sobel_vertical[y][x] * sobel_vertical[y][x]))
+                if (x % granularity == 0) and (y % granularity == 0):
+                    angle = cv2.fastAtan2(sobel_horizontal[y][x], sobel_vertical[y][x])
+                    magnitude = np.sqrt((sobel_horizontal[y][x] * sobel_horizontal[y][x]) + (sobel_vertical[y][x] * sobel_vertical[y][x]))
 
-                    #cv2.line(self._result, (x, y), (x + 10, y + 2), (0, 255, 0), 1)
+                    c_x = int(np.cos(angle) * magnitude)
+                    c_y = int(np.sin(angle) * magnitude)
+
+                    #cv2.arrowedLine(self._result, (x, y), (x + c_x, y + c_y), (0, 255, 0), 1)
+                    cv2.arrowedLine(self._result, (x, y), (x + 10, y + 10), (0, 255, 0), 1)
