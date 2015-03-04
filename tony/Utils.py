@@ -3,6 +3,7 @@ __author__ = 'tbeltramelli'
 import cv2
 from pylab import *
 
+
 class Utils:
 
     @staticmethod

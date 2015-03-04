@@ -8,6 +8,7 @@ from Filtering import *
 from RegionProps import *
 from scipy.cluster.vq import *
 
+
 class Eye:
     _result = None
     _right_template = None
@@ -25,10 +26,9 @@ class Eye:
         #pupils = self.get_pupil(img, 40)
         #glints = self.get_glints(img, 180)
         #corners = self.get_eye_corners(img)
+        iris = self.get_iris(img)
 
-        self._detect_pupil_k_means(img)
-
-        #Utils.show(self._result)
+        Utils.show(self._result)
 
     def get_pupil(self, img, threshold):
         img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY_INV)[1]
@@ -47,18 +47,18 @@ class Eye:
         coordinates = []
 
         for cnt in contours:
-            vals = props.CalcContourProperties(cnt, ['Area', 'Length', 'Centroid', 'Extend', 'ConvexHull'])
+            properties = props.CalcContourProperties(cnt, ['Area', 'Length', 'Centroid', 'Extend', 'ConvexHull'])
 
             perimeter = cv2.arcLength(cnt, True)
-            radius = np.sqrt(vals['Area'] / np.pi)
+            radius = np.sqrt(properties['Area'] / np.pi)
             radius = 1.0 if radius == 0.0 else radius
 
             circularity = perimeter / (radius * 2 * np.pi)
 
-            if ((circularity >= 0.0) and (circularity <= 1.5)) and ((vals['Area'] > 900) and (vals['Area'] < side)):
-                for i, centroid in enumerate(vals['Centroid']):
+            if ((circularity >= 0.0) and (circularity <= 1.5)) and ((properties['Area'] > 900) and (properties['Area'] < side)):
+                for i, centroid in enumerate(properties['Centroid']):
                     if i == 0:
-                        center = int(centroid), int(vals['Centroid'][i+1])
+                        center = int(centroid), int(properties['Centroid'][i+1])
 
                         if Utils.is_in_area_center(center[0], center[1], width, height):
                             if len(cnt) >= 5:
@@ -70,7 +70,7 @@ class Eye:
 
         return coordinates
 
-    def _detect_pupil_k_means(self, img, intensity_weight=2, side=100, clusters=6):
+    def _detect_pupil_k_means(self, img, intensity_weight=2, side=100, clusters=5):
         img = cv2.resize(img, (side, side))
 
         width, height = img.shape
@@ -108,12 +108,12 @@ class Eye:
         coordinates = []
 
         for cnt in contours:
-            vals = props.CalcContourProperties(cnt, ['Area', 'Length', 'Centroid', 'Extend', 'ConvexHull'])
+            properties = props.CalcContourProperties(cnt, ['Area', 'Length', 'Centroid', 'Extend', 'ConvexHull'])
 
-            if vals['Extend'] > 0 and vals['Area'] < 100:
-                for i, centroid in enumerate(vals['Centroid']):
+            if properties['Extend'] > 0 and properties['Area'] < 100:
+                for i, centroid in enumerate(properties['Centroid']):
                     if i == 0:
-                        center = int(centroid), int(vals['Centroid'][i+1])
+                        center = int(centroid), int(properties['Centroid'][i+1])
 
                         if Utils.is_in_area_center(center[0], center[1], width, height):
                             coordinates.append(center)
@@ -135,4 +135,26 @@ class Eye:
 
         cv2.rectangle(self._result, (max_loc[0] - height/2, max_loc[1] - width/2), (max_loc[0] + height/2, max_loc[1] + width/2), 2)
 
-        return (max_loc[0], max_loc[1])
+        return max_loc[0], max_loc[1]
+
+    def get_iris(self, img):
+        self.gradient_image_info(img)
+
+        return [0, 0]
+
+    def gradient_image_info(self, img):
+        height, width = img.shape
+
+        sobel_horizontal = cv2.Sobel(img, cv2.CV_32F, 1, 0)
+        sobel_vertical = cv2.Sobel(img, cv2.CV_32F, 0, 1)
+
+        angle = np.empty(img.shape)
+        magnitude = np.empty(img.shape)
+
+        for y in range(height):
+            for x in range(width):
+                if (x % 20 == 0) and (y % 20 == 0):
+                    angle[y][x] = cv2.fastAtan2(sobel_horizontal[y][x], sobel_vertical[y][x])
+                    magnitude[y][x] = np.sqrt((sobel_horizontal[y][x] * sobel_horizontal[y][x]) + (sobel_vertical[y][x] * sobel_vertical[y][x]))
+
+                    #cv2.line(self._result, (x, y), (x + 10, y + 2), (0, 255, 0), 1)

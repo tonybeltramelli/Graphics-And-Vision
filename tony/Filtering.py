@@ -3,6 +3,7 @@ __author__ = 'tbeltramelli'
 from pylab import *
 import cv2
 
+
 class Filtering:
     @staticmethod
     def get_gray_scale_image(image):

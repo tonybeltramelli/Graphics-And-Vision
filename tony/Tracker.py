@@ -5,6 +5,7 @@ import cv2
 from Eye import *
 from Utils import *
 
+
 class Tracker:
     def __init__(self, path):
         e = Eye("../Sequences/right_corner.jpg", "../Sequences/left_corner.jpg")
