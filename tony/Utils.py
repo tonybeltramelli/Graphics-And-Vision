@@ -57,3 +57,10 @@ class Utils:
     @staticmethod
     def is_in_area_center(x, y, width, height):
         return ((x > width/4) and (x < 3 * (width/4))) and ((y > height/4) and (y < 3 * (height/4)))
+
+    @staticmethod
+    def hex_color_to_bgr(hexadecimal):
+        red = (hexadecimal & 0xFF0000) >> 16
+        green = (hexadecimal & 0xFF00) >> 8
+        blue = (hexadecimal & 0xFF)
+        return [blue, green, red]

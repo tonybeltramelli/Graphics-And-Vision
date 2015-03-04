@@ -23,9 +23,9 @@ class Eye:
 
         img = Filtering.apply_box_filter(Filtering.get_gray_scale_image(img), 5)
 
-        #pupils = self.get_pupil(img, 40)
-        #glints = self.get_glints(img, 180)
-        #corners = self.get_eye_corners(img)
+        pupils = self.get_pupil(img, 40)
+        glints = self.get_glints(img, 180)
+        corners = self.get_eye_corners(img)
         iris = self.get_iris(img)
 
         Utils.show(self._result)
@@ -138,11 +138,11 @@ class Eye:
         return max_loc[0], max_loc[1]
 
     def get_iris(self, img):
-        self.gradient_image_info(img)
+        self._draw_gradient_image(img)
 
         return [0, 0]
 
-    def gradient_image_info(self, img, granularity=20):
+    def _draw_gradient_image(self, img, granularity=20):
         height, width = img.shape
 
         sobel_horizontal = cv2.Sobel(img, cv2.CV_32F, 1, 0)
@@ -157,5 +157,5 @@ class Eye:
                     c_x = int(np.cos(angle) * magnitude)
                     c_y = int(np.sin(angle) * magnitude)
 
-                    #cv2.arrowedLine(self._result, (x, y), (x + c_x, y + c_y), (0, 255, 0), 1)
-                    cv2.arrowedLine(self._result, (x, y), (x + 10, y + 10), (0, 255, 0), 1)
+                    cv2.arrowedLine(self._result, (x, y), (x + c_x, y + c_y), Utils.hex_color_to_bgr(0xf2f378), 1)
+
