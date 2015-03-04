@@ -151,11 +151,11 @@ class Eye:
         for y in range(height):
             for x in range(width):
                 if (x % granularity == 0) and (y % granularity == 0):
-                    angle = cv2.fastAtan2(sobel_horizontal[y][x], sobel_vertical[y][x])
+                    orientation = cv2.fastAtan2(sobel_horizontal[y][x], sobel_vertical[y][x])
                     magnitude = np.sqrt((sobel_horizontal[y][x] * sobel_horizontal[y][x]) + (sobel_vertical[y][x] * sobel_vertical[y][x]))
 
-                    c_x = int(np.cos(angle) * magnitude)
-                    c_y = int(np.sin(angle) * magnitude)
+                    c_x = int(np.cos(orientation) * magnitude)
+                    c_y = int(np.sin(orientation) * magnitude)
 
                     cv2.arrowedLine(self._result, (x, y), (x + c_x, y + c_y), Utils.hex_color_to_bgr(0xf2f378), 1)
 
