@@ -22,17 +22,15 @@ class Eye:
 
         img = Filtering.apply_box_filter(Filtering.get_gray_scale_image(img), 5)
 
-        pupils = self.get_pupil(img, 40)
+        #pupils = self.get_pupil(img, 40)
         #glints = self.get_glints(img, 180)
         #corners = self.get_eye_corners(img)
+
+        self._detect_pupil_k_means(img)
 
         #Utils.show(self._result)
 
     def get_pupil(self, img, threshold):
-        self._detect_pupil_k_means(img)
-        #return self._detect_pupil(img, threshold)
-
-    def _detect_pupil(self, img, threshold):
         img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY_INV)[1]
         width, height = img.shape
         side = (width * height) / 8
@@ -72,7 +70,7 @@ class Eye:
 
         return coordinates
 
-    def _detect_pupil_k_means(self, img, intensity_weight=2, side=100):
+    def _detect_pupil_k_means(self, img, intensity_weight=2, side=100, clusters=6):
         img = cv2.resize(img, (side, side))
 
         width, height = img.shape
@@ -89,15 +87,15 @@ class Eye:
 
         features = np.array(features, 'f')
 
-        centroids, variance = kmeans(features, 6)
+        centroids, variance = kmeans(features, clusters)
         label, distance = vq(features, centroids)
 
         labels = np.array(np.reshape(label, (width, height)))
+        labels = np.asarray([Utils.normalize(0, 255, i, 0, clusters) for i in labels])
 
-        f = figure(1)
-        imshow(labels)
-        f.canvas.draw()
-        f.show()
+        labels = np.reshape(labels, (side, side))
+
+        Utils.show(labels)
 
     def get_glints(self, img, threshold):
         img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY)[1]
