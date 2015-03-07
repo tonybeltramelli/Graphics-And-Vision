@@ -1,6 +1,8 @@
+import argparse
 import cv2
 import cv
 import pylab
+import math
 from SIGBTools import RegionProps
 from SIGBTools import getLineCoordinates
 from SIGBTools import ROISelector
@@ -10,8 +12,30 @@ import sys
 from scipy.cluster.vq import *
 from scipy.misc import imresize
 from matplotlib.pyplot import *
+from matplotlib import pyplot as plt
 
-
+files = [
+        "Sequences/eye1.avi",
+        "Sequences/eye2.avi",
+        "Sequences/eye3.avi",
+        "Sequences/eye4.avi",
+        "Sequences/eye5.avi",
+        "Sequences/eye6.avi",
+        "Sequences/eye7.avi",
+        "Sequences/eye8.avi",
+        "Sequences/eye9.avi",
+        "Sequences/eye10.avi",
+        "Sequences/eye11.avi",
+        "Sequences/eye12.avi",
+        "Sequences/eye13.mp4",
+        "Sequences/eye14.mp4",
+        "Sequences/eye15.mp4",
+        "Sequences/eye16.mp4",
+        "Sequences/eye17.mp4",
+        "Sequences/eye18.mp4",
+        "Sequences/eye19.mp4",
+        "Sequences/EyeBizaro.avi"
+]        
 
 inputFile = "Sequences/eye1.avi"
 outputFile = "eyeTrackerResult.mp4"
@@ -26,34 +50,82 @@ leftTemplate = []
 rightTemplate = []
 frameNr =0;
 
-
-def GetPupil(gray,thr):
+def GetPupil(gray, thr, areaMin, areaMax):
 	'''Given a gray level image, gray and threshold value return a list of pupil locations'''
-	tempResultImg = cv2.cvtColor(gray,cv2.COLOR_GRAY2BGR) #used to draw temporary results
-	cv2.circle(tempResultImg,(100,200), 2, (0,0,255),4) #draw a circle
-	cv2.imshow("TempResults",tempResultImg)
+	#tempResultImg = cv2.cvtColor(gray,cv2.COLOR_GRAY2BGR) #used to draw temporary results
+	#cv2.circle(tempResultImg,(100,200), 2, (0,0,255),4) #draw a circle
+	#cv2.imshow("TempResults",tempResultImg)
 
 	props = RegionProps()
 	val,binI =cv2.threshold(gray, thr, 255, cv2.THRESH_BINARY_INV)
+
 	cv2.imshow("Threshold",binI)
 	#Calculate blobs
 	contours, hierarchy = cv2.findContours(binI, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 	pupils = [];
 	# YOUR IMPLEMENTATION HERE !!!!
 
+        for c in contours:
+                tmp = props.CalcContourProperties(c, properties=["centroid", "area", "extend"])
+                x, y= tmp['Centroid']
+                area = tmp['Area']
+                extend = tmp['Extend']
+                if area > areaMin and area < areaMax and extend < 1:
+                        if len(c) >= 5:
+                                el = cv2.fitEllipse(c)
+                                pupils.append(el)
+                        #cv2.ellipse(tempResultImg, el, (0, 255, 0), 4)
+                        #cv2.circle(tempResultImg,(int(x),int(y)), 2, (0,0,255),4) #draw a circle
+                        #cv2.imshow("TempResults",tempResultImg)
+
+
+
 	return pupils
 
-def GetGlints(gray,thr):
+def GetGlints(gray, thr, areaMin, areaMax):
 	''' Given a gray level image, gray and threshold
 	value return a list of glint locations'''
 	# YOUR IMPLEMENTATION HERE !!!!
-	pass
+	#tempResultImg = cv2.cvtColor(gray,cv2.COLOR_GRAY2BGR) #used to draw temporary results
+
+	props = RegionProps()
+
+        gray = cv2.GaussianBlur(gray, (11, 11), 0)
+
+	val,binI = cv2.threshold(gray, thr, 255, cv2.THRESH_BINARY)
+
+	cv2.imshow("Threshold Glint",binI)
+        #cv2.imshow("Gray", gray)
+
+        
+
+	#Calculate blobs
+	contours, hierarchy = cv2.findContours(binI, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+	glints = [];
+
+        for c in contours:
+                tmp = props.CalcContourProperties(c, properties=["centroid", "area", "extend"])
+                area = tmp['Area']
+                extend = tmp['Extend']
+                #print tmp['Area']
+                if area > areaMin and area < areaMax and extend < 1:
+                        if len(c) >= 5:
+                                el = cv2.fitEllipse(c)
+                                glints.append(el)
+                                #canny = cv2.Canny(tempResultImg, 30, 150)
+                                #cv2.imshow("Canny", canny)
+                        #x, y = tmp['Centroid']
+                        #cv2.circle(tempResultImg,(int(x), int(y)), 2, (0,0,255),4)
+                        #cv2.ellipse(tempResultImg,el,(0,255,0),1)
+                        #cv2.imshow("Glint detect", tempResultImg)
+
+        return glints
 
 def GetIrisUsingThreshold(gray,pupil):
-	''' Given a gray level image, gray and threshold
-	value return a list of iris locations'''
-	# YOUR IMPLEMENTATION HERE !!!!
-	pass
+        ''' Given a gray level image, gray and threshold
+        value return a list of iris locations'''
+        # YOUR IMPLEMENTATION HERE !!!!
+        pass
 
 def circularHough(gray):
 	''' Performs a circular hough transform of the image, gray and shows the  detected circles
@@ -63,9 +135,9 @@ def circularHough(gray):
 
 	dp = 6; minDist = 30
 	highThr = 20 #High threshold for canny
-	accThr = 850; #accumulator threshold for the circle centers at the detection stage. The smaller it is, the more false circles may be detected
-	maxRadius = 50;
-	minRadius = 155;
+        accThr = 850; #accumulator threshold for the circle centers at the detection stage. The smaller it is, the more false circles may be detected
+        maxRadius = 50;
+        minRadius = 155;
 	circles = cv2.HoughCircles(blur,cv2.cv.CV_HOUGH_GRADIENT, dp,minDist, None, highThr,accThr,maxRadius, minRadius)
 
 	#Make a color image from gray for display purposes
@@ -94,12 +166,58 @@ def GetIrisUsingSimplifyedHough(gray,pupil):
 	# YOUR IMPLEMENTATION HERE !!!!
 	pass
 
-def GetEyeCorners(leftTemplate, rightTemplate,pupilPosition=None):
-	pass
+def GetEyeCorners(img, leftTemplate, rightTemplate,pupilPosition=None):
+        img2 = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+        leftTemplate = cv2.cvtColor(leftTemplate, cv2.COLOR_RGB2GRAY)
+        rightTemplate = cv2.cvtColor(rightTemplate, cv2.COLOR_RGB2GRAY)
+        lw, lh = leftTemplate.shape[::-1]
+        rw, rh = rightTemplate.shape[::-1]
+
+        
+#        methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR', 'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
+        colors = [(0,255,0), (255,0,0), (0,0,255), (255,255,0), (0,255,255), (255,0,255)] # [green, red, blue, yellow, teal, purple]
+        methods = ['cv2.TM_SQDIFF_NORMED']
+
+        for m in range(len(methods)):
+                i = img2.copy()
+                method = eval(methods[m])
+                color = colors[m]
+                # apply template matching
+                res = cv2.matchTemplate(i, leftTemplate, method)
+                resRight = cv2.matchTemplate(i, rightTemplate, method)
+
+                min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+                min_valr, max_valr, min_locr, max_locr = cv2.minMaxLoc(resRight)
+
+                # if method is tm_sqdiff or tm_sqdiff_normed
+                if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+                        top_left = min_loc
+                        top_leftr = min_locr
+                else:
+                        top_left = max_loc
+                        top_leftr = max_locr
+
+                bottom_right = (top_left[0] + lw, top_left[1] + lh)
+                bottom_rightr = (top_leftr[0] + rw, top_leftr[1] + rh)
+
+                cv2.rectangle(img, top_left, bottom_right, color, 1)
+                cv2.rectangle(img, top_leftr, bottom_rightr, color, 1)
 
 def FilterPupilGlint(pupils,glints):
 	''' Given a list of pupil candidates and glint candidates returns a list of pupil and glints'''
-	pass
+        retval = []
+        for p in pupils:
+                for g in glints:
+                        maxLength = int(p[2]) # Max length is the radius of the pupil ellipse.
+                        dx = math.fabs(p[0][0] - g[0][0])
+                        dy = math.fabs(p[0][1] - g[0][1]) 
+                        length = math.sqrt((dx**2 + dy**2))
+
+                        if length < maxLength:
+                                retval.append(g)
+
+        return retval
 
 
 
@@ -110,15 +228,18 @@ def update(I):
 	img = I.copy()
 	sliderVals = getSliderVals()
 	gray = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
+
 	# Do the magic
-	pupils = GetPupil(gray,sliderVals['pupilThr'])
-	glints = GetGlints(gray,sliderVals['glintThr'])
-	FilterPupilGlint(pupils,glints)
+	pupils = GetPupil(gray,sliderVals['pupilThr'], sliderVals['minSize'], sliderVals['maxSize'])
+        glints = GetGlints(gray,sliderVals['glintThr'], 0, 150)
+        glints = FilterPupilGlint(pupils,glints)
 
 	#Do template matching
 	global leftTemplate
 	global rightTemplate
-	GetEyeCorners(leftTemplate, rightTemplate)
+        if len(leftTemplate) > 0 and len(rightTemplate) > 0:
+                GetEyeCorners(img, leftTemplate, rightTemplate)
+
 	#Display results
 	global frameNr,drawImg
 	x,y = 10,10
@@ -134,14 +255,14 @@ def update(I):
 
 		#Uncomment these lines as your methods start to work to display the result in the
 		#original image
-		# for pupil in pupils:
-		#         cv2.ellipse(img,pupil,(0,255,0),1)
-		#         C = int(pupil[0][0]),int(pupil[0][1])
-		#         cv2.circle(img,C, 2, (0,0,255),4)
-		#     for glint in glints:
-		#         C = int(glint[0]),int(glint[1])
-		#         cv2.circle(img,C, 2,(255,0,255),5)
-		#     cv2.imshow("Result", img)
+        for pupil in pupils:
+                cv2.ellipse(img,pupil,(0,255,0),1)
+                C = int(pupil[0][0]),int(pupil[0][1])
+                cv2.circle(img,C, 2, (0,0,255),4)
+                for glint in glints:
+                        C = int(glint[0][0]),int(glint[0][1])
+                        cv2.circle(img,C, 2,(255,0,255),5)
+        cv2.imshow("Result", img)
 
 		#For Iris detection - Week 2
 		#circularHough(gray)
@@ -169,6 +290,7 @@ def run(fileName,resultFile='eyeTrackingResults.avi'):
 
 	frameNr =0
 	if(sequenceOK):
+                #detectPupilKMeans(gray = cv2.cvtColor(imgOrig, cv2.COLOR_RGB2GRAY))
 		update(imgOrig)
 	printUsage()
 	frameNr=0;
@@ -183,8 +305,17 @@ def run(fileName,resultFile='eyeTrackingResults.avi'):
 			if(not sliderVals['Running']):
 				roiSelect=ROISelector(imgOrig)
 				pts,regionSelected= roiSelect.SelectArea('Select left eye corner',(400,200))
+
+                                roiSelect2=ROISelector(imgOrig)
+				pts2,regionSelected2= roiSelect2.SelectArea('Select right eye corner',(400,200))
+
+                                # TODO: Optimize
+                                global leftTemplate
+                                global rightTemplate
 				if(regionSelected):
-					leftTemplate = imgOrig[pts[0][1]:pts[1][1],pts[0][0]:pts[1][0]]
+                                        leftTemplate = imgOrig[pts[0][1]:pts[1][1],pts[0][0]:pts[1][0]]
+                                if(regionSelected2):
+                                        rightTemplate = imgOrig[pts2[0][1]:pts2[1][1],pts2[0][0]:pts2[1][0]]
 
 		if ch == 27:
 			break
@@ -209,14 +340,15 @@ def run(fileName,resultFile='eyeTrackingResults.avi'):
 		if(ch==ord('r')):
 			frameNr =0
 			sequenceOK=False
-			cap,imgOrig,sequenceOK = getImageSequence(fileName)
-			update(imgOrig)
+			cap,imgOrig,sequenceOK = getImageSequence(fileName)                        
+			(imgOrig)
 			sequenceOK=True
 
 		sliderVals=getSliderVals()
 		if(sliderVals['Running']):
 			sequenceOK, imgOrig = cap.read()
 			if(sequenceOK): #if there is an image
+                                #detectPupilKMeans(gray = cv2.cvtColor(imgOrig, cv2.COLOR_RGB2GRAY))
 				update(imgOrig)
 			if(saveFrames):
 				videoWriter.write(drawImg)
@@ -334,7 +466,7 @@ def setupWindowSliders():
 	''' Define windows for displaying the results and create trackbars'''
 	cv2.namedWindow("Result")
 	cv2.namedWindow('Threshold')
-	cv2.namedWindow("TempResults")
+	#cv2.namedWindow("TempResults")
 	#Threshold value for the pupil intensity
 	cv2.createTrackbar('pupilThr','Threshold', 90, 255, onSlidersChange)
 	#Threshold value for the glint intensities
@@ -363,7 +495,26 @@ def onSlidersChange(dummy=None):
 	if(not sv['Running']): # if pause
 		update(imgOrig)
 
+def setInputFile(n):
+        global inputFile
+        if n > 20:
+                inputFile = files[20]
+        elif n < 0:
+                inputFile = files[0]
+        else:
+                inputFile = files[n]
+
 #--------------------------
 #         main
 #--------------------------
-run(inputFile)
+
+def main():
+        parser = argparse.ArgumentParser(description='Select input file')
+        parser.add_argument('inputFile', metavar='N', type=int, help='A number between 1 and 20, representing the input file')
+        
+        args = parser.parse_args()
+        setInputFile(args.inputFile)
+        run(inputFile)        
+
+if __name__ == "__main__":
+        main()
