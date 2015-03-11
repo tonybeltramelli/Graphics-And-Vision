@@ -1,7 +1,5 @@
 __author__ = 'tbeltramelli'
 
-import cv2
-
 from Eye import *
 from Utils import *
 

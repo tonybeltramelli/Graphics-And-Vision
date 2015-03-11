@@ -1,12 +1,10 @@
 __author__ = 'tbeltramelli'
 
-import cv2
-from pylab import *
-import numpy as np
+from scipy.cluster.vq import *
+
 from Utils import *
 from Filtering import *
 from RegionProps import *
-from scipy.cluster.vq import *
 
 
 class Eye:
@@ -32,7 +30,7 @@ class Eye:
 
     def get_pupil(self, img, threshold):
         img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY_INV)[1]
-        width, height = img.shape
+        height, width = img.shape
         side = (width * height) / 8
 
         st = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
@@ -73,7 +71,7 @@ class Eye:
     def _detect_pupil_k_means(self, img, intensity_weight=2, side=100, clusters=5):
         img = cv2.resize(img, (side, side))
 
-        width, height = img.shape
+        height, width = img.shape
         rows, columns = np.meshgrid(range(width), range(height))
 
         x = rows.flatten()
@@ -99,7 +97,7 @@ class Eye:
 
     def get_glints(self, img, threshold):
         img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY)[1]
-        width, height = img.shape
+        height, width = img.shape
 
         c, contours, hierarchy = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -129,11 +127,11 @@ class Eye:
 
     def _match(self, img, template):
         matching = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
-        width, height = template.shape
+        height, width = template.shape
 
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(matching)
 
-        cv2.rectangle(self._result, (max_loc[0] - height/2, max_loc[1] - width/2), (max_loc[0] + height/2, max_loc[1] + width/2), 2)
+        cv2.rectangle(self._result, (max_loc[0] - width/2, max_loc[1] - height/2), (max_loc[0] + width/2, max_loc[1] + height/2), 2)
 
         return max_loc[0], max_loc[1]
 

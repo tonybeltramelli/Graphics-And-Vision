@@ -1,12 +1,8 @@
 import cv2
 #import cv
-import pylab
-from SIGBTools import RegionProps
-from SIGBTools import getLineCoordinates
-from SIGBTools import ROISelector
-from SIGBTools import getImageSequence
-import numpy as np
-import sys
+from assignment1.tony.SIGBTools import RegionProps
+from assignment1.tony.SIGBTools import ROISelector
+from assignment1.tony.SIGBTools import getImageSequence
 from scipy.cluster.vq import *
 #from scipy.misc import imresize
 from matplotlib.pyplot import *
