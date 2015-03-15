@@ -2,10 +2,11 @@ __author__ = 'tbeltramelli'
 
 from scipy.cluster.vq import *
 
-from Utils import *
+from UMedia import *
 from Filtering import *
 from RegionProps import *
-
+from UMath import *
+from UGraphics import *
 
 class Eye:
     _result = None
@@ -13,8 +14,8 @@ class Eye:
     _left_template = None
 
     def __init__(self, right_corner_path, left_corner_path):
-        self._right_template = Filtering.apply_box_filter(Filtering.get_gray_scale_image(Utils.get_image(right_corner_path)), 5)
-        self._left_template = Filtering.apply_box_filter(Filtering.get_gray_scale_image(Utils.get_image(left_corner_path)), 5)
+        self._right_template = Filtering.apply_box_filter(Filtering.get_gray_scale_image(UMedia.get_image(right_corner_path)), 5)
+        self._left_template = Filtering.apply_box_filter(Filtering.get_gray_scale_image(UMedia.get_image(left_corner_path)), 5)
 
     def process(self, img):
         self._result = img
@@ -24,9 +25,9 @@ class Eye:
         pupil = self.get_pupil(img, 40)
         glints = self.get_glints(img, 180, pupil)
         #corners = self.get_eye_corners(img)
-        iris = self.get_iris(img, pupil)
+        iris = self.get_iris(img)
 
-        Utils.show(self._result)
+        UMedia.show(self._result)
 
     def get_pupil(self, img, threshold):
         img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY_INV)[1]
@@ -56,7 +57,7 @@ class Eye:
                     if i == 0:
                         center = int(centroid), int(properties['Centroid'][i+1])
 
-                        if Utils.is_in_area_center(center[0], center[1], width, height):
+                        if UMath.is_in_area(center[0], center[1], width, height):
                             if len(cnt) >= 5:
                                 ellipse = cv2.fitEllipse(cnt)
                                 cv2.ellipse(self._result, ellipse, (0, 0, 255), 1)
@@ -138,42 +139,24 @@ class Eye:
 
         return max_loc[0], max_loc[1]
 
-    def get_iris(self, img, pupil_position):
-        self._draw_gradient_image(img, pupil_position)
+    def get_iris(self, img):
+        self._draw_gradient_image(img)
 
         return [0, 0]
 
-    def _draw_gradient_image(self, img, pupil_position, granularity=10):
+    def _draw_gradient_image(self, img, granularity=10):
         height, width = img.shape
 
         sobel_horizontal = cv2.Sobel(img, cv2.CV_32F, 1, 0)
         sobel_vertical = cv2.Sobel(img, cv2.CV_32F, 0, 1)
-
-        max_dist = int(((width + height) / 2) / 4)
-        contour = []
-        m = []
 
         for y in range(height):
             for x in range(width):
                 if (x % granularity == 0) and (y % granularity == 0):
                     orientation = cv2.fastAtan2(sobel_horizontal[y][x], sobel_vertical[y][x])
                     magnitude = np.sqrt((sobel_horizontal[y][x] * sobel_horizontal[y][x]) + (sobel_vertical[y][x] * sobel_vertical[y][x]))
-
-                    distance = np.sqrt(np.power(pupil_position[0] - x, 2) + np.power(pupil_position[1] - y, 2))
-
-                    if distance < max_dist and distance > max_dist / 3 and magnitude < 150 and magnitude > 40:
-                        point = x, y
-                        contour.append(point)
-                        m.append(magnitude)
-
-                    #c_x = int(np.cos(orientation) * magnitude/granularity)
-                    #c_y = int(np.sin(orientation) * magnitude/granularity)
-
-                    #cv2.arrowedLine(self._result, (x, y), (x + c_x, y + c_y), Utils.hex_color_to_bgr(0xf2f378), 1)
-
-        if len(contour) >= 5:
-            ellipse = cv2.fitEllipse(np.array(contour))
-            cv2.ellipse(self._result, ellipse, (0, 0, 255), 1)
+                    
+                    UGraphics.draw_vector(self._result, x, y, magnitude / granularity, orientation)
 
     def FindEllipseContour (self, img, gradient_magnitude, estimated_center, estimated_radius):
         point_number = 30
