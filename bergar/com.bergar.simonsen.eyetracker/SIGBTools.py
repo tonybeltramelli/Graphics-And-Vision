@@ -1,9 +1,10 @@
-import cv2;
+__author__ = 'bs'
+
 import cv2
 import numpy as np
 import pylab
 from pylab import *
-import matplotlib as mpl 
+import matplotlib as mpl
 import math
 ''' This module contains sets of functions useful for basic image analysis and should be useful in the SIGB course.
 Written and Assembled  (2012,2013) by  Dan Witzner Hansen, IT University.
@@ -34,13 +35,13 @@ def getLineCoordinates(p1, p2):
     "Get integer coordinates between p1 and p2 using Bresenhams algorithm"
     " When an image I is given the method also returns the values of I along the line from p1 to p2. p1 and p2 should be within the image I"
     " Usage: coordinates=getLineCoordinates((x1,y1),(x2,y2))"
-    
-    
+
+
     (x1, y1)=p1
     x1=int(x1); y1=int(y1)
     (x2,y2)=p2
     x2 = int(x2);y2=int(y2)
-    
+
     points = []
     issteep = abs(y2-y1) > abs(x2-x1)
     if issteep:
@@ -72,44 +73,44 @@ def getLineCoordinates(p1, p2):
     # Reverse the list if the coordinates were reversed
     if rev:
         points.reverse()
-       
+
     retPoints = np.array(points)
     X = retPoints[:,0];
     Y = retPoints[:,1];
-    
-    
-    return retPoints 
+
+
+    return retPoints
 
 class RegionProps:
-    '''Class used for getting descriptors of contour-based connected components 
-        
+    '''Class used for getting descriptors of contour-based connected components
+
         The main method to use is: CalcContourProperties(contour,properties=[]):
         contour: a contours found through cv2.findContours
         properties: list of strings specifying which properties should be calculated and returned
-        
+
         The following properties can be specified:
-        
-        Area: Area within the contour  - float 
-        Boundingbox: Bounding box around contour - 4 tuple (topleft.x,topleft.y,width,height) 
+
+        Area: Area within the contour  - float
+        Boundingbox: Bounding box around contour - 4 tuple (topleft.x,topleft.y,width,height)
         Length: Length of the contour
         Centroid: The center of contour: (x,y)
-        Moments: Dictionary of moments: see 
+        Moments: Dictionary of moments: see
         Perimiter: Permiter of the contour - equivalent to the length
         Equivdiameter: sqrt(4*Area/pi)
         Extend: Ratio of the area and the area of the bounding box. Expresses how spread out the contour is
         Convexhull: Calculates the convex hull of the contour points
         IsConvex: boolean value specifying if the set of contour points is convex
-        
+
         Returns: Dictionary with key equal to the property name
-        
-        Example: 
-             contours, hierarchy = cv2.findContours(I, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)  
+
+        Example:
+             contours, hierarchy = cv2.findContours(I, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
              goodContours = []
              for cnt in contours:
                 vals = props.CalcContourProperties(cnt,['Area','Length','Centroid','Extend','ConvexHull'])
                 if vals['Area']>100 and vals['Area']<200
                  goodContours.append(cnt)
-        '''       
+        '''
     def __calcArea(self,m,c):
         return cv2.contourArea(c) #,m['m00']
     def __calcLength(self,c):
@@ -121,10 +122,10 @@ class RegionProps:
     def __calcCentroid(self,m):
         if(m['m00']!=0):
             retVal =  ( m['m10']/m['m00'],m['m01']/m['m00'] )
-        else:   
-            retVal = (-1,-1)    
+        else:
+            retVal = (-1,-1)
         return retVal
-        
+
     def __calcEquivDiameter(self,contur):
         Area = self.__calcArea(m)
         return np.sqrt(4*Area/np.pi)
@@ -139,18 +140,18 @@ class RegionProps:
              #Area =  self.__calcArea(m,c)
              #Solidity = Area/ConvexArea
              return {'ConvexHull':CH} #{'ConvexHull':CH,'ConvexArea':ConvexArea,'Solidity':Solidity}
-         #except: 
+         #except:
          #    print "stuff:", type(m), type(c)
-        
+
     def CalcContourProperties(self,contour,properties=[]):
         failInInput = False;
         propertyList=[]
         contourProps={};
         for prop in properties:
-            prop = str(prop).lower()        
+            prop = str(prop).lower()
             m = cv2.moments(contour) #Always call moments
             if (prop=='area'):
-                contourProps.update({'Area':self.__calcArea(m,contour)}); 
+                contourProps.update({'Area':self.__calcArea(m,contour)});
             elif (prop=="boundingbox"):
                 contourProps.update({'BoundingBox':self.__calcBoundingBox(contour)});
             elif (prop=="length"):
@@ -158,34 +159,34 @@ class RegionProps:
             elif (prop=="centroid"):
                 contourProps.update({'Centroid':self.__calcCentroid(m)});
             elif (prop=="moments"):
-                contourProps.update({'Moments':m});    
+                contourProps.update({'Moments':m});
             elif (prop=="perimiter"):
                 contourProps.update({'Perimiter':self.__calcPerimiter(contour)});
             elif (prop=="equivdiameter"):
-                contourProps.update({'EquivDiameter':self.__calcEquiDiameter(m,contour)}); 
+                contourProps.update({'EquivDiameter':self.__calcEquiDiameter(m,contour)});
             elif (prop=="extend"):
                 contourProps.update({'Extend':self.__calcExtend(m,contour)});
             elif (prop=="convexhull"): #Returns the dictionary
-                contourProps.update(self.__calcConvexHull(m,contour));  
+                contourProps.update(self.__calcConvexHull(m,contour));
             elif (prop=="isConvex"):
                     contourProps.update({'IsConvex': cv2.isContourConvex(contour)});
-            elif failInInput:   
-                    pass   
-            else:    
+            elif failInInput:
+                    pass
+            else:
                 print "--"*20
-                print "*** PROPERTY ERROR "+ prop+" DOES NOT EXIST ***" 
+                print "*** PROPERTY ERROR "+ prop+" DOES NOT EXIST ***"
                 print "THIS ERROR MESSAGE WILL ONLY BE PRINTED ONCE"
                 print "--"*20
-                failInInput = True;     
-        return contourProps         
+                failInInput = True;
+        return contourProps
 
 
 class ROISelector:
-        
+
     def __resetPoints(self):
         self.seed_Left_pt = None
         self.seed_Right_pt = None
-    
+
     def __init__(self,inputImg):
         self.img=inputImg.copy()
         self.seed_Left_pt = None
@@ -198,38 +199,38 @@ class ROISelector:
           Enter/SPACE - OK
           ESC   - exit (Cancel)
         '''
-    
+
     def update(self):
         if (self.seed_Left_pt is None) | (self.seed_Right_pt is None):
             cv2.imshow(self.winName, self.img)
             return
-        
+
         flooded = self.img.copy()
         cv2.rectangle(flooded, self.seed_Left_pt, self.seed_Right_pt,  (0, 0, 255),1)
         cv2.imshow(self.winName, flooded)
-    
-        
-        
+
+
+
     def onmouse(self, event, x, y, flags, param):
 
         if  flags & cv2.EVENT_FLAG_LBUTTON:
             self.seed_Left_pt = x, y
     #        print seed_Left_pt
-    
-        if  flags & cv2.EVENT_FLAG_RBUTTON: 
+
+        if  flags & cv2.EVENT_FLAG_RBUTTON:
             self.seed_Right_pt = x, y
     #        print seed_Right_pt
-        
+
         self.update()
     def setCorners(self):
         points=[]
-    
+
         UpLeft=(min(self.seed_Left_pt[0],self.seed_Right_pt[0]),min(self.seed_Left_pt[1],self.seed_Right_pt[1]))
         DownRight=(max(self.seed_Left_pt[0],self.seed_Right_pt[0]),max(self.seed_Left_pt[1],self.seed_Right_pt[1]))
         points.append(UpLeft)
         points.append(DownRight)
-        return points        
-                
+        return points
+
     def SelectArea(self,winName='SELECT AN AREA',winPos=(400,400)):# This function returns the corners of the selected area as: [(UpLeftcorner),(DownRightCorner)]
         self.__resetPoints()
         self.winName = winName
@@ -245,8 +246,8 @@ class ROISelector:
                 cv2.destroyWindow(self.winName)
                 return None,False
                 break
-            if ((ch == 13) or (ch==32)): #enter or space key   
-                cv2.destroyWindow(self.winName)    
+            if ((ch == 13) or (ch==32)): #enter or space key
+                cv2.destroyWindow(self.winName)
                 return self.setCorners(),True
                 break
 
@@ -255,7 +256,7 @@ def splitfn(fn):
     path, fn = os.path.split(fn)
     name, ext = os.path.splitext(fn)
     return path, name, ext
-    
+
 def anorm2(a):
     return (a*a).sum(-1)
 
@@ -316,10 +317,10 @@ class Sketcher:
         self.dirty = False
         self.show()
         cv2.setMouseCallback(self.windowname, self.on_mouse)
-    
+
     def show(self):
         cv2.imshow(self.windowname, self.dests[0])
-    
+
     def on_mouse(self, event, x, y, flags, param):
         pt = (x, y)
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -370,42 +371,42 @@ def toHomogenious(points):
         homogeneous coordinates. """
     return vstack((points,ones((1,points.shape[1]))))
 
-def normalizeHomogenious(points): 
+def normalizeHomogenious(points):
     """ Normalize a collection of points in
     homogeneous coordinates so that last row = 1. """
-    for row in points: 
+    for row in points:
         row /= points[-1]
     return points
-def H_from_points(fp,tp): 
+def H_from_points(fp,tp):
     """ Find homography H, such that fp is mapped to tp
     using the linear DLT method. Points are conditioned automatically. """
-    if fp.shape != tp.shape: 
+    if fp.shape != tp.shape:
         raise RuntimeError('number of points do not match')
-    # condition points (important for numerical reasons) 
+    # condition points (important for numerical reasons)
 
     #--from points
-    m = mean(fp[:2], axis=1) 
+    m = mean(fp[:2], axis=1)
     maxstd = max(std(fp[:2], axis=1)) + 1e-9
-    T1 = diag([1/maxstd, 1/maxstd, 1]) 
-    T1[0][2] = -m[0]/maxstd 
-    T1[1][2] = -m[1]/maxstd 
+    T1 = diag([1/maxstd, 1/maxstd, 1])
+    T1[0][2] = -m[0]/maxstd
+    T1[1][2] = -m[1]/maxstd
     fp = dot(T1,fp)
 
     # --to points--
-    m = mean(tp[:2], axis=1) 
-    maxstd = max(std(tp[:2], axis=1)) + 1e-9 
-    T2 = diag([1/maxstd, 1/maxstd, 1]) 
-    T2[0][2] = -m[0]/maxstd 
-    T2[1][2] = -m[1]/maxstd 
+    m = mean(tp[:2], axis=1)
+    maxstd = max(std(tp[:2], axis=1)) + 1e-9
+    T2 = diag([1/maxstd, 1/maxstd, 1])
+    T2[0][2] = -m[0]/maxstd
+    T2[1][2] = -m[1]/maxstd
     tp = dot(T2,tp)
     # create matrix for linear method, 2 rows for each correspondence pair
-    nbr_correspondences = fp.shape[1] 
-    A = zeros((2*nbr_correspondences,9)) 
+    nbr_correspondences = fp.shape[1]
+    A = zeros((2*nbr_correspondences,9))
     for i in range(nbr_correspondences):
         A[2*i] = [-fp[0][i],-fp[1][i],-1,0,0,0, tp[0][i]*fp[0][i],tp[0][i]*fp            [1][i],tp[0][i]]
         A[2*i+1] = [0,0,0,-fp[0][i],-fp[1][i],-1, tp[1][i]*fp[0][i],tp[1][i]*fp              [1][i],tp[1][i]]
-    
-    U,S,V = linalg.svd(A) 
+
+    U,S,V = linalg.svd(A)
     H = V[8].reshape((3,3))
     # decondition
     H = dot(linalg.inv(T2),dot(H,T1)) # normalize and return
@@ -427,7 +428,7 @@ def calibrateCamera(camNum =0,nPoints=5,patternSize=(9,6)):
     pattern_points *= square_size
 
     camera_matrix = np.zeros((3, 3))
-    dist_coefs = np.zeros(4) 
+    dist_coefs = np.zeros(4)
     rvecs=np.zeros((3, 3))
     tvecs=np.zeros((3, 3))
 
@@ -446,13 +447,13 @@ def calibrateCamera(camNum =0,nPoints=5,patternSize=(9,6)):
         if (calibrated==False):
             found,corners=cv2.findChessboardCorners(imgGray, pattern_size  )
         ch = cv2.waitKey(1)
-        
+
         if(ch==27): #ESC
             running = False
             found = False
             calibrated = False
             return (calibrated,None,None,None)
-        
+
         if (found!=0)&(n>0):
             cv2.drawChessboardCorners(img, pattern_size, corners,found)
             if ((ch == 13) or (ch==32)): #enter or space key :
@@ -461,21 +462,21 @@ def calibrateCamera(camNum =0,nPoints=5,patternSize=(9,6)):
 
                 img_points.append(corners.reshape(-1, 2))
                 obj_points.append(pattern_points)
-                n=n-1 
-                imgCnt=imgCnt+1;    
+                n=n-1
+                imgCnt=imgCnt+1;
                 print('sample %s taken')%(imgCnt)
 
                 if n==0:
     #                print( img_points)
-    #                print(obj_points)     
+    #                print(obj_points)
                     rms, camera_matrix, dist_coefs, rvecs, tvecs  = cv2.calibrateCamera(obj_points, img_points, (w, h),camera_matrix,dist_coefs,flags = 0)
     #               print "RMS:", rms
                     print "camera matrix:\n", camera_matrix
                     print "distortion coefficients: ", dist_coefs
                     calibrated=True
-                    
+
                     return (calibrated, camera_matrix, dist_coefs,rms)
-                
+
         elif(found==0)&(n>0):
             print("chessboard not found")
 
