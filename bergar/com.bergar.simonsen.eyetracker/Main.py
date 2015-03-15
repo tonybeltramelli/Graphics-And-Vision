@@ -33,7 +33,7 @@ files = [
 ]
 
 dir = "../Sequences/"
-inputFile = dir + files[10]
+inputFile = dir + files[6]
 outputFile = dir + "eyeTrackerResult.mp4"
 
 imgOrig = []
@@ -42,6 +42,9 @@ imgOrig = []
 leftTemplate = []
 rightTemplate = []
 frameNr =0
+
+# counter for storing images
+imgNr = 0
 
 def setText(dst, (x, y), s):
     cv2.putText(dst, s, (x+1, y+1), cv2.FONT_HERSHEY_PLAIN, 1.0, (0, 0, 0), thickness = 2, lineType=cv2.CV_AA)
@@ -53,13 +56,13 @@ def update(I):
     sliderVals = getSliderVals()
     gray = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
 
-    kmeanTresh = detectPupilKMeans(gray, K=12, distanceWeight=2, reSize=(40,40))
+    # kmeanTresh = detectPupilKMeans(gray, K=12, distanceWeight=2, reSize=(40,40))
 
     # Do the magic
-    pupils = GetPupil(gray,sliderVals['pupilThr'], sliderVals['minSize'], sliderVals['maxSize'])
-    pupils2 = GetPupil(gray,kmeanTresh, sliderVals['minSize'], sliderVals['maxSize'])
-    glints = GetGlints(gray,sliderVals['glintThr'], 0, 150)
-    glints = FilterPupilGlint(pupils,glints)
+    # pupils = GetPupil(gray,sliderVals['pupilThr'], sliderVals['minSize'], sliderVals['maxSize'])
+    # pupils2 = GetPupil(gray,kmeanTresh, sliderVals['minSize'], sliderVals['maxSize'])
+    # glints = GetGlints(gray,sliderVals['glintThr'], 0, 150)
+    # glints = FilterPupilGlint(pupils,glints)
 
     #Do template matching
     global leftTemplate
@@ -82,24 +85,25 @@ def update(I):
 
     #Uncomment these lines as your methods start to work to display the result in the
     #original image using blob detection and sliders for treshold
-    for pupil in pupils:
-        cv2.ellipse(img,pupil,(0,255,0),1)
-        C = int(pupil[0][0]),int(pupil[0][1])
-        cv2.circle(img,C, 2, (0,0,255),4)
-        for glint in glints:
-            C = int(glint[0][0]),int(glint[0][1])
-            cv2.circle(img,C, 2,(255,0,255),5)
-    cv2.imshow("Result", img)
+
+    # for pupil in pupils:
+    #     cv2.ellipse(img,pupil,(0,255,0),1)
+    #     C = int(pupil[0][0]),int(pupil[0][1])
+    #     cv2.circle(img,C, 2, (0,0,255),4)
+    #     for glint in glints:
+    #         C = int(glint[0][0]),int(glint[0][1])
+    #         cv2.circle(img,C, 2,(255,0,255),5)
+    # cv2.imshow("Result", img)
 
     # draw results using kmeans clustering
-    for pupil in pupils2:
-        cv2.ellipse(img,pupil,(255,255,0),1)
-        C = int(pupil[0][0]),int(pupil[0][1])
-        cv2.circle(img,C, 2, (0,255,255),4)
-        for glint in glints:
-            C = int(glint[0][0]),int(glint[0][1])
-            cv2.circle(img,C, 2,(255,0,255),5)
-    cv2.imshow("Result", img)
+    # for pupil in pupils2:
+    #     cv2.ellipse(img,pupil,(255,255,0),1)
+    #     C = int(pupil[0][0]),int(pupil[0][1])
+    #     cv2.circle(img,C, 2, (0,255,255),4)
+    #     for glint in glints:
+    #         C = int(glint[0][0]),int(glint[0][1])
+    #         cv2.circle(img,C, 2,(255,0,255),5)
+    # cv2.imshow("Result", img)
 
 
 
@@ -202,6 +206,10 @@ def run(fileName,resultFile='eyeTrackingResults.avi'):
                 videoWriter = cv2.VideoWriter(resultFile, cv.CV_FOURCC('D','I','V','3'), 15.0,(imSize[1],imSize[0]),True) #Make a video writer
                 saveFrames = True
                 print "Recording..."
+        if (ch == ord('i')):
+            global imgNr
+            cv2.imwrite("tmp_" + str(imgNr) + ".png", drawImg)
+            imgNr = imgNr + 1
 
 
 

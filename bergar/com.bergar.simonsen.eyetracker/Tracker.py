@@ -167,9 +167,9 @@ def GetEyeCorners(img, leftTemplate, rightTemplate,pupilPosition=None):
     rw, rh = rightTemplate.shape[::-1]
 
 
-    #        methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR', 'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
+    methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR', 'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
     colors = [(0,255,0), (255,0,0), (0,0,255), (255,255,0), (0,255,255), (255,0,255)] # [green, red, blue, yellow, teal, purple]
-    methods = ['cv2.TM_SQDIFF_NORMED']
+    # methods = ['cv2.TM_SQDIFF_NORMED']
 
     for m in range(len(methods)):
         i = img2.copy()
