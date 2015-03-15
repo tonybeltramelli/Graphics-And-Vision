@@ -32,7 +32,7 @@ files = [
 ]
 
 dir = "../Sequences/"
-inputFile = dir + files[0]
+inputFile = dir + files[10]
 outputFile = dir + "eyeTrackerResult.mp4"
 
 imgOrig = []
@@ -52,29 +52,11 @@ def update(I):
     sliderVals = getSliderVals()
     gray = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
 
-    detectPupilKMeans(gray, K=7, distanceWeight=24, reSize=(40,40))
-    # detectPupilKMeans(gray, K=3, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=4, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=5, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=6, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=7, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=8, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=9, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=10, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=11, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=12, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=13, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=14, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=15, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=16, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=17, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=18, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=19, distanceWeight=32, reSize=(40,40))
-    # detectPupilKMeans(gray, K=20, distanceWeight=32, reSize=(40,40))
+    kmeanTresh = detectPupilKMeans(gray, K=12, distanceWeight=2, reSize=(40,40))
 
     # Do the magic
     # pupils = GetPupil(gray,sliderVals['pupilThr'], sliderVals['minSize'], sliderVals['maxSize'])
-    pupils = GetPupil(gray,107, sliderVals['minSize'], sliderVals['maxSize'])
+    pupils = GetPupil(gray,kmeanTresh, sliderVals['minSize'], sliderVals['maxSize'])
     glints = GetGlints(gray,sliderVals['glintThr'], 0, 150)
     glints = FilterPupilGlint(pupils,glints)
 

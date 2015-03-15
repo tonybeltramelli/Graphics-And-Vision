@@ -115,11 +115,21 @@ def detectPupilKMeans(gray,K=2,distanceWeight=2,reSize=(40,40)):
     # re-create image from
     labelIm = np.array(np.reshape(label,(M,N)))
 
+    tmp = centroids[[range(0, K)], [0]]
+    return min(tmp[0])
+
+    # Debugging
+    # print "-----"
+    # print tmp
+    # print darkest
+    # print "-----"
+
+    # Show figure ?
     # f = figure(1)
-    f = figure(distanceWeight)
-    imshow(labelIm)
-    # f.savefig(str(K))
-    f.show()
+    # f = figure(distanceWeight)
+    # imshow(labelIm)
+    # f.savefig("gaussian_" + str(K) + "_" + str(distanceWeight))
+    # f.show()
 
 def detectPupilHough(gray):
     #Using the Hough transform to detect ellipses
