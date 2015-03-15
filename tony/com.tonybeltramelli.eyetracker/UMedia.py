@@ -4,7 +4,7 @@ import cv2
 from pylab import *
 
 
-class Utils:
+class UMedia:
 
     @staticmethod
     def get_image(path):
@@ -29,8 +29,8 @@ class Utils:
         for i, img in enumerate(images):
             cv2.namedWindow(("image %d" % i), cv2.WINDOW_AUTOSIZE)
             cv2.imshow(("image %d" % i), img)
-            #cv2.waitKey(0)
-            #cv2.destroyWindow(("image %d" % i))
+            cv2.waitKey(0)
+            cv2.destroyWindow(("image %d" % i))
 
     @staticmethod
     def show_all_gray(*images):
@@ -49,18 +49,3 @@ class Utils:
             title(("image %d" % i))
             imshow(img)
         show()
-
-    @staticmethod
-    def normalize(range_min, range_max, x, x_min, x_max):
-        return range_min + (((x - x_min) * (range_max - range_min)) / (x_max - x_min))
-
-    @staticmethod
-    def is_in_area_center(x, y, width, height):
-        return ((x > width/4) and (x < 3 * (width/4))) and ((y > height/4) and (y < 3 * (height/4)))
-
-    @staticmethod
-    def hex_color_to_bgr(hexadecimal):
-        red = (hexadecimal & 0xFF0000) >> 16
-        green = (hexadecimal & 0xFF00) >> 8
-        blue = (hexadecimal & 0xFF)
-        return [blue, green, red]
