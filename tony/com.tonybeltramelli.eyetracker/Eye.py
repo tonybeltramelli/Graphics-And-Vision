@@ -144,7 +144,7 @@ class Eye:
 
         return [0, 0]
 
-    def _draw_gradient_image(self, img, pupil_position, granularity=1, normal_tolerance=10):
+    def _draw_gradient_image(self, img, pupil_position, granularity=5, normal_tolerance=10):
         height, width = img.shape
 
         sobel_horizontal = cv2.Sobel(img, cv2.CV_32F, 1, 0)
@@ -156,12 +156,10 @@ class Eye:
                     orientation = cv2.fastAtan2(sobel_horizontal[y][x], sobel_vertical[y][x])
                     magnitude = np.sqrt((sobel_horizontal[y][x] * sobel_horizontal[y][x]) + (sobel_vertical[y][x] * sobel_vertical[y][x]))
 
-                    #angle_normal = cv2.fastAtan2(pupil_position[1] - y, pupil_position[0] - x)
+                    angle_normal = cv2.fastAtan2(pupil_position[1] - y, pupil_position[0] - x)
 
-                    self._result[y][x] = magnitude
-
-                    #if orientation <= angle_normal + normal_tolerance and orientation >= angle_normal - normal_tolerance:
-                    #UGraphics.draw_vector(self._result, x, y, magnitude / granularity, orientation)
+                    if orientation <= angle_normal + normal_tolerance and orientation >= angle_normal - normal_tolerance:
+                        UGraphics.draw_vector(self._result, x, y, magnitude / granularity, orientation)
 
     def FindEllipseContour (self, img, gradient_magnitude, estimated_center, estimated_radius):
         point_number = 30
