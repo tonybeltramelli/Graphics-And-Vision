@@ -88,6 +88,7 @@ def detectPupilKMeans(gray,K=2,distanceWeight=2,reSize=(40,40)):
             reSize            : the size of the image to do k-means on
         '''
     #Resize for faster performance
+
     smallI = cv2.resize(gray, reSize)
 
 

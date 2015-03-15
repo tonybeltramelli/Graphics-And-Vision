@@ -3,6 +3,7 @@ __author__ = 'bs'
 from SIGBTools import *
 from Tracker import *
 import numpy as np
+import cv as cv
 
 # -----------------------------
 # Global variables
@@ -55,8 +56,8 @@ def update(I):
     kmeanTresh = detectPupilKMeans(gray, K=12, distanceWeight=2, reSize=(40,40))
 
     # Do the magic
-    # pupils = GetPupil(gray,sliderVals['pupilThr'], sliderVals['minSize'], sliderVals['maxSize'])
-    pupils = GetPupil(gray,kmeanTresh, sliderVals['minSize'], sliderVals['maxSize'])
+    pupils = GetPupil(gray,sliderVals['pupilThr'], sliderVals['minSize'], sliderVals['maxSize'])
+    pupils2 = GetPupil(gray,kmeanTresh, sliderVals['minSize'], sliderVals['maxSize'])
     glints = GetGlints(gray,sliderVals['glintThr'], 0, 150)
     glints = FilterPupilGlint(pupils,glints)
 
@@ -80,7 +81,7 @@ def update(I):
     cv2.imshow('Result',img)
 
     #Uncomment these lines as your methods start to work to display the result in the
-    #original image
+    #original image using blob detection and sliders for treshold
     for pupil in pupils:
         cv2.ellipse(img,pupil,(0,255,0),1)
         C = int(pupil[0][0]),int(pupil[0][1])
@@ -89,6 +90,18 @@ def update(I):
             C = int(glint[0][0]),int(glint[0][1])
             cv2.circle(img,C, 2,(255,0,255),5)
     cv2.imshow("Result", img)
+
+    # draw results using kmeans clustering
+    for pupil in pupils2:
+        cv2.ellipse(img,pupil,(255,255,0),1)
+        C = int(pupil[0][0]),int(pupil[0][1])
+        cv2.circle(img,C, 2, (0,255,255),4)
+        for glint in glints:
+            C = int(glint[0][0]),int(glint[0][1])
+            cv2.circle(img,C, 2,(255,0,255),5)
+    cv2.imshow("Result", img)
+
+
 
     #For Iris detection - Week 2
     #circularHough(gray)
