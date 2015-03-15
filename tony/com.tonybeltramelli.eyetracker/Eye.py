@@ -23,9 +23,9 @@ class Eye:
         img = Filtering.apply_box_filter(Filtering.get_gray_scale_image(img), 5)
 
         pupil = self.get_pupil(img, 40)
-        glints = self.get_glints(img, 180, pupil)
+        #glints = self.get_glints(img, 180, pupil)
         #corners = self.get_eye_corners(img)
-        iris = self.get_iris(img)
+        iris = self.get_iris(img, pupil)
 
         UMedia.show(self._result)
 
@@ -139,12 +139,12 @@ class Eye:
 
         return max_loc[0], max_loc[1]
 
-    def get_iris(self, img):
-        self._draw_gradient_image(img)
+    def get_iris(self, img, pupil_position):
+        self._draw_gradient_image(img, pupil_position)
 
         return [0, 0]
 
-    def _draw_gradient_image(self, img, granularity=10):
+    def _draw_gradient_image(self, img, pupil_position, granularity=1, normal_tolerance=10):
         height, width = img.shape
 
         sobel_horizontal = cv2.Sobel(img, cv2.CV_32F, 1, 0)
@@ -155,8 +155,13 @@ class Eye:
                 if (x % granularity == 0) and (y % granularity == 0):
                     orientation = cv2.fastAtan2(sobel_horizontal[y][x], sobel_vertical[y][x])
                     magnitude = np.sqrt((sobel_horizontal[y][x] * sobel_horizontal[y][x]) + (sobel_vertical[y][x] * sobel_vertical[y][x]))
-                    
-                    UGraphics.draw_vector(self._result, x, y, magnitude / granularity, orientation)
+
+                    #angle_normal = cv2.fastAtan2(pupil_position[1] - y, pupil_position[0] - x)
+
+                    self._result[y][x] = magnitude
+
+                    #if orientation <= angle_normal + normal_tolerance and orientation >= angle_normal - normal_tolerance:
+                    #UGraphics.draw_vector(self._result, x, y, magnitude / granularity, orientation)
 
     def FindEllipseContour (self, img, gradient_magnitude, estimated_center, estimated_radius):
         point_number = 30
