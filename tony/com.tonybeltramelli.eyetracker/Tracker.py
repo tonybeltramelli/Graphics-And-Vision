@@ -8,4 +8,4 @@ class Tracker:
     def __init__(self, path):
         e = Eye("../Sequences/right_corner.jpg", "../Sequences/left_corner.jpg")
         UMedia.load_video(path, e.process)
-        #e.process(UMedia.get_image("../Sequences/Eye1.jpg"))
+        #e.process(UMedia.get_image("../Sequences/eye2.png"))

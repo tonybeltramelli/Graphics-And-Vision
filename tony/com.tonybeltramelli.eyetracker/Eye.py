@@ -142,9 +142,9 @@ class Eye:
 
         return max_loc[0], max_loc[1]
 
-    def get_iris(self, img, pupil_position, pupil_radius, angle_tolerance=3, min_magnitude=20, max_magnitude=30):
-        if pupil_radius == 0:
-            return 0
+    def get_iris(self, img, pupil_position, pupil_radius, angle_tolerance=3, min_magnitude=15, max_magnitude=20):
+        if pupil_radius <= 1.0:
+            return 0.0
 
         orientation, magnitude = self._get_gradient(img)
 
@@ -158,7 +158,7 @@ class Eye:
         for sample in range(len(pupil_samples)):
             pupil_sample = (int(pupil_samples[sample][0]), int(pupil_samples[sample][1]))
             iris_sample = (int(iris_samples[sample][0]), int(iris_samples[sample][1]))
-
+            
             normal = UMath.get_line_coordinates(pupil_sample, iris_sample)
             normal_angle = cv2.fastAtan2(pupil_sample[1] - pupil_position[1], pupil_sample[0] - pupil_position[0])
 
@@ -182,11 +182,11 @@ class Eye:
 
                         iris_radius_vote[radius] += 1
 
-            cv2.line(self._result, pupil_sample, iris_sample, (0, 255, 0), 1)
+            cv2.line(self._result, pupil_sample, iris_sample, UGraphics.hex_color_to_bgr(0xf2f378), 1)
 
         iris_radius = max(iris_radius_vote.iteritems(), key=operator.itemgetter(1))[0] if len(iris_radius_vote) > 0 else 0
 
-        cv2.circle(self._result, pupil_position, iris_radius, (255, 255, 0), 1)
+        cv2.circle(self._result, pupil_position, iris_radius, (255, 0, 0), 1)
 
         return iris_radius
 
@@ -204,7 +204,7 @@ class Eye:
                 orientation[y][x] = cv2.fastAtan2(sobel_horizontal[y][x], sobel_vertical[y][x])
                 magnitude[y][x] = np.sqrt(np.power(sobel_horizontal[y][x], 2) + np.power(sobel_vertical[y][x], 2))
 
-                if (x % granularity == 0) and (y % granularity == 0):
-                    UGraphics.draw_vector(self._result, x, y, magnitude[y][x] / granularity, orientation[y][x])
+                #if (x % granularity == 0) and (y % granularity == 0):
+                #    UGraphics.draw_vector(self._result, x, y, magnitude[y][x] / granularity, orientation[y][x])
 
         return orientation, magnitude
