@@ -29,8 +29,8 @@ class UMedia:
         for i, img in enumerate(images):
             cv2.namedWindow(("image %d" % i), cv2.WINDOW_AUTOSIZE)
             cv2.imshow(("image %d" % i), img)
-            cv2.waitKey(0)
-            cv2.destroyWindow(("image %d" % i))
+            #cv2.waitKey(0)
+            #cv2.destroyWindow(("image %d" % i))
 
     @staticmethod
     def show_all_gray(*images):

@@ -7,6 +7,7 @@ from Filtering import *
 from RegionProps import *
 from UMath import *
 from UGraphics import *
+import operator
 
 class Eye:
     _result = None
@@ -22,10 +23,10 @@ class Eye:
 
         img = Filtering.apply_box_filter(Filtering.get_gray_scale_image(img), 5)
 
-        pupil = self.get_pupil(img, 40)
-        #glints = self.get_glints(img, 180, pupil)
+        pupil_position, pupil_radius = self.get_pupil(img, 40)
+        iris_radius = self.get_iris(img, pupil_position, pupil_radius)
+        glints = self.get_glints(img, 180, pupil_position, iris_radius)
         #corners = self.get_eye_corners(img)
-        iris = self.get_iris(img, pupil)
 
         UMedia.show(self._result)
 
@@ -42,6 +43,8 @@ class Eye:
         c, contours, hierarchy = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
         props = RegionProps()
+
+        radius = 0.0
 
         for cnt in contours:
             properties = props.CalcContourProperties(cnt, ['Area', 'Length', 'Centroid', 'Extend', 'ConvexHull'])
@@ -64,8 +67,8 @@ class Eye:
 
                             cv2.circle(self._result, center, int(radius), (0, 0, 255), 1)
 
-                            return center
-        return int(width / 2), int(height / 2)
+                            return center, radius
+        return (int(width / 2), int(height / 2)), radius
 
 
     def _detect_pupil_k_means(self, img, intensity_weight=2, side=100, clusters=5):
@@ -95,11 +98,11 @@ class Eye:
         f.canvas.draw()
         f.show()
 
-    def get_glints(self, img, threshold, pupil_position):
+    def get_glints(self, img, threshold, pupil_position, iris_radius):
         img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY)[1]
         height, width = img.shape
 
-        max_dist = ((width + height) / 2) / 8
+        max_dist = iris_radius if iris_radius > 0 else (width + height) / 16
 
         c, contours, hierarchy = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -139,38 +142,69 @@ class Eye:
 
         return max_loc[0], max_loc[1]
 
-    def get_iris(self, img, pupil_position):
-        self._draw_gradient_image(img, pupil_position)
+    def get_iris(self, img, pupil_position, pupil_radius, angle_tolerance=3, min_magnitude=20, max_magnitude=30):
+        if pupil_radius == 0:
+            return 0
 
-        return [0, 0]
+        orientation, magnitude = self._get_gradient(img)
 
-    def _draw_gradient_image(self, img, pupil_position, granularity=5, normal_tolerance=10):
+        max_iris_radius = pupil_radius * 5
+
+        pupil_samples = UMath.get_circle_samples(pupil_position, pupil_radius)
+        iris_samples = UMath.get_circle_samples(pupil_position, max_iris_radius)
+
+        iris_radius_vote = dict()
+
+        for sample in range(len(pupil_samples)):
+            pupil_sample = (int(pupil_samples[sample][0]), int(pupil_samples[sample][1]))
+            iris_sample = (int(iris_samples[sample][0]), int(iris_samples[sample][1]))
+
+            normal = UMath.get_line_coordinates(pupil_sample, iris_sample)
+            normal_angle = cv2.fastAtan2(pupil_sample[1] - pupil_position[1], pupil_sample[0] - pupil_position[0])
+
+            for point in normal:
+                i = point[1] - 1
+                j = point[0] - 1
+
+                if (i >= 0 and j >= 0) and (len(magnitude) > i and len(magnitude[i]) > j):
+                    mag = magnitude[i][j]
+
+                if min_magnitude < mag < max_magnitude:
+                    angle = normal_angle + orientation[i][j] - 90
+                    angle = angle - 360 if angle > 360 else angle
+
+                    if angle < angle_tolerance:
+                        radius = np.sqrt(np.power(point[0] - pupil_position[0], 2) + np.power(point[1] - pupil_position[1], 2))
+                        radius = int(radius)
+
+                        if radius not in iris_radius_vote:
+                            iris_radius_vote[radius] = 0
+
+                        iris_radius_vote[radius] += 1
+
+            cv2.line(self._result, pupil_sample, iris_sample, (0, 255, 0), 1)
+
+        iris_radius = max(iris_radius_vote.iteritems(), key=operator.itemgetter(1))[0] if len(iris_radius_vote) > 0 else 0
+
+        cv2.circle(self._result, pupil_position, iris_radius, (255, 255, 0), 1)
+
+        return iris_radius
+
+    def _get_gradient(self, img, granularity=10):
         height, width = img.shape
 
         sobel_horizontal = cv2.Sobel(img, cv2.CV_32F, 1, 0)
         sobel_vertical = cv2.Sobel(img, cv2.CV_32F, 0, 1)
 
+        orientation = np.empty(img.shape)
+        magnitude = np.empty(img.shape)
+
         for y in range(height):
             for x in range(width):
+                orientation[y][x] = cv2.fastAtan2(sobel_horizontal[y][x], sobel_vertical[y][x])
+                magnitude[y][x] = np.sqrt(np.power(sobel_horizontal[y][x], 2) + np.power(sobel_vertical[y][x], 2))
+
                 if (x % granularity == 0) and (y % granularity == 0):
-                    orientation = cv2.fastAtan2(sobel_horizontal[y][x], sobel_vertical[y][x])
-                    magnitude = np.sqrt((sobel_horizontal[y][x] * sobel_horizontal[y][x]) + (sobel_vertical[y][x] * sobel_vertical[y][x]))
+                    UGraphics.draw_vector(self._result, x, y, magnitude[y][x] / granularity, orientation[y][x])
 
-                    angle_normal = cv2.fastAtan2(pupil_position[1] - y, pupil_position[0] - x)
-
-                    if orientation <= angle_normal + normal_tolerance and orientation >= angle_normal - normal_tolerance:
-                        UGraphics.draw_vector(self._result, x, y, magnitude / granularity, orientation)
-
-    def FindEllipseContour (self, img, gradient_magnitude, estimated_center, estimated_radius):
-        point_number = 30
-        points = self.get_circle_samples(estimated_center, estimated_radius)
-
-        t = 0
-
-        pupil = np.zeros((point_number, 1, 2)).astype(np.float32)
-
-        #for (x, y, dx , dy) in points:
-
-    def get_circle_samples(self, center=(0, 0), radius=1, point_number=30):
-        s = np.linspace(0, 2 * math.pi, point_number)
-        return [(radius * np.cos(t) + center[0], radius * np.sin(t) + center[1], np.cos(t), np.sin(t)) for t in s]
+        return orientation, magnitude
