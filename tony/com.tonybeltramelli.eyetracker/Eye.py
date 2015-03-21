@@ -25,8 +25,8 @@ class Eye:
 
         pupil_position, pupil_radius = self.get_pupil(img, 40)
         iris_radius = self.get_iris(img, pupil_position, pupil_radius)
-        glints = self.get_glints(img, 180, pupil_position, iris_radius)
-        #corners = self.get_eye_corners(img)
+        glints_position = self.get_glints(img, 180, pupil_position, iris_radius)
+        corners_position = self.get_eye_corners(img)
 
         UMedia.show(self._result)
 
@@ -69,34 +69,6 @@ class Eye:
 
                             return center, radius
         return (int(width / 2), int(height / 2)), radius
-
-
-    def _detect_pupil_k_means(self, img, intensity_weight=2, side=100, clusters=5):
-        img = cv2.resize(img, (side, side))
-
-        height, width = img.shape
-        rows, columns = np.meshgrid(range(width), range(height))
-
-        x = rows.flatten()
-        y = columns.flatten()
-        intensity = img.flatten()
-
-        features = np.zeros((len(x), 3))
-        features[:, 0] = intensity * intensity_weight
-        features[:, 1] = y
-        features[:, 2] = x
-
-        features = np.array(features, 'f')
-
-        centroids, variance = kmeans(features, clusters)
-        label, distance = vq(features, centroids)
-
-        labels = np.array(np.reshape(label, (width, height)))
-
-        f = figure(1)
-        imshow(labels)
-        f.canvas.draw()
-        f.show()
 
     def get_glints(self, img, threshold, pupil_position, iris_radius):
         img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY)[1]
@@ -158,7 +130,7 @@ class Eye:
         for sample in range(len(pupil_samples)):
             pupil_sample = (int(pupil_samples[sample][0]), int(pupil_samples[sample][1]))
             iris_sample = (int(iris_samples[sample][0]), int(iris_samples[sample][1]))
-            
+
             normal = UMath.get_line_coordinates(pupil_sample, iris_sample)
             normal_angle = cv2.fastAtan2(pupil_sample[1] - pupil_position[1], pupil_sample[0] - pupil_position[0])
 
@@ -204,7 +176,7 @@ class Eye:
                 orientation[y][x] = cv2.fastAtan2(sobel_horizontal[y][x], sobel_vertical[y][x])
                 magnitude[y][x] = np.sqrt(np.power(sobel_horizontal[y][x], 2) + np.power(sobel_vertical[y][x], 2))
 
-                #if (x % granularity == 0) and (y % granularity == 0):
-                #    UGraphics.draw_vector(self._result, x, y, magnitude[y][x] / granularity, orientation[y][x])
+                if (x % granularity == 0) and (y % granularity == 0):
+                    UGraphics.draw_vector(self._result, x, y, magnitude[y][x] / granularity, orientation[y][x])
 
         return orientation, magnitude
