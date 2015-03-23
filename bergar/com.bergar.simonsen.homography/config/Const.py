@@ -30,3 +30,19 @@ TRACKING_DATA       = GROUND_FLOOR_DATA + "trackingdata.dat"
 CALIBRATION_PATTERN = IMAGES + "CalibrationPattern.png"
 ITU_LOGO            = IMAGES + "ITULogo.jpg"
 ITU_MAP             = IMAGES + "ITUMap.bmp"
+
+# Folder for saving files
+SAVE_FOLDER         = PREFIX + "SavedFiles/"
+OUTPUT_IMAGE        = "output_image"
+OUTPUT_MATRIX       = "homography"
+
+JPG_EXTENSION       = ".jpg"
+NPY_EXTENSION       = ".npy"
+
+# Max files
+MAX_FILES           = 100
+
+# Global variables
+DELAY               = 1
+SAVE_MAP_IMAGE      = True
+SAVE_H_M_G          = True

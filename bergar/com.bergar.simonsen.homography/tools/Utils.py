@@ -7,9 +7,14 @@ from pylab import *
 import matplotlib as mpl
 import math
 from scipy import linalg
+import os.path
 ''' This module contains sets of functions useful for basic image analysis and should be useful in the SIGB course.
 Written and Assembled  (2012,2013) by  Dan Witzner Hansen, IT University.
 '''
+
+def doesFileExist(file):
+    return os.path.isfile(file)
+
 
 def hFromPoints(fp, tp):
     if fp.shape != tp.shape:

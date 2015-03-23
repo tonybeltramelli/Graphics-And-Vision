@@ -6,6 +6,7 @@ from matplotlib.pyplot import *
 from config.Const import *
 from tools import Utils
 from tools import Calc
+from tools import IO
 import numpy as np
 
 def texturemapObjectSequence():
@@ -32,8 +33,7 @@ def texturemapObjectSequence():
             squares = Calc.DetectPlaneObject(imgOrig)
 
             for sqr in squares:
-                 #Do texturemap here!!!!
-                 #TODO
+                 #TODO Do texturemap here!!!!
 
                 if(drawContours):
                     for p in sqr:
@@ -118,7 +118,6 @@ def realisticTexturemap(scale,point,map):
     #H = np.load('H_G_M')
     print "Not implemented yet\n"*30
 
-
 def simpleTextureMap():
 
     I1 = cv2.imread(ITU_LOGO)
@@ -133,7 +132,6 @@ def simpleTextureMap():
     cv2.imshow("Overlayed Image",M)
     cv2.waitKey(0)
 
-
 def frameTrackingData2BoxData(data):
 
     #Convert a row of points into tuple of points for each rectangle
@@ -144,62 +142,33 @@ def frameTrackingData2BoxData(data):
         boxes.append(box)
     return boxes
 
-def displayTrace(H, x, y):
-
-    # A = np.array([[86.23750109, 196.05751674], [77.42296322, 97.62851056], [ 141.57321103, 88.8139727 ], [ 165.07864534, 184.30479958]])
-    # B = np.array([[ 330.00343448, 179.62120685], [239.40957308, 182.06968959], [238.18533171, 139.22124163], [ 330.00343448, 141.66972437]])
-
-    # print H
-    # vec = [x, y, 1]
+def displayTrace(I, H, x, y, data, maxData):
+    # convert x, y coordinates to homography matrix
     vec = [
         [1, 0 ,x],
         [0, 1, y],
         [0, 0, 1]
     ]
+
+    # calculate the transformed coordinates
     p = H * vec
 
-    # print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    # print p
-    # print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    #
-    # print str(p.item(2)) + " " + str(p.item(5))
-    # print str(p.item(2)/p.item(8)) + " " + str(p.item(5)/p.item(8))
-
+    # divide coordinates with the homogenous scaling factor
     x = p.item(2) / p.item(8)
     y = p.item(5) / p.item(8)
 
+    cv2.circle(I, (int(x), int(y)), 1, (0, 0, 255), thickness=0, lineType=cv2.CV_AA, shift=0)
 
-    # print "---"
-    # print type(p)
-    # print "---"
-    # print p[0][1]
-    # return p[0][2], p[1][2]
-    # return x + p[0][2], y + p[1][2]
-    # return p.item(2), p.item(5)
-    return x, y
+    # save image when sequence is done i.e., when data == maxData
+    if data == maxData:
+        if SAVE_MAP_IMAGE:
+            IO.writeImage(I)
+        if SAVE_H_M_G:
+            IO.writeHomography(H)
 
-def test():
-    map = cv2.imread(ITU_MAP)
-    map_rotate = cv2.imread("../Images/ITUMapCopy.bmp")
+    # TODO: Write video
 
-    H, imagePoints = Utils.getHomographyFromMouse(map, map_rotate, 4)
-
-    for p in imagePoints:
-        colr = (255, 0, 0)
-        for x in p:
-            x2, y2 = displayTrace(H, x[0], x[1])
-            cv2.circle(map, (int(x2), int(y2)), 3, colr, thickness=1, lineType=8, shift=0)
-            cv2.circle(map_rotate, (int(x2), int(y2)), 3, colr, thickness=1, lineType=8, shift=0)
-        colr = (0, 255, 0)
-
-    # x2, y2 = displayTrace(H, x1, y1)
-    # print "new coords: (" + str(x2) + ", " + str(y2) + ")"
-    # cv2.circle(map, (int(x2), int(y2)), 1, (0, 0, 255), thickness=1, lineType=8, shift=0)
-
-    cv2.imshow("map", map)
-    cv2.imshow("map rotate", map_rotate)
-
-    cv2.waitKey(0)
+    cv2.imshow("map", I)
 
 def showFloorTrackingData():
     #Load videodata
@@ -219,18 +188,12 @@ def showFloorTrackingData():
 
     fig = figure()
     for k in range(m):
+        curData = k
         running, imgOrig = cap.read()
+        # only do the calibration once
         if getPoints:
             H, imagePoints = Utils.getHomographyFromMouse(imgOrig, map, 4)
             getPoints = False
-            # print H
-            # print imagePoints
-            # print type(H)
-            # print "-------------------------"
-            # print H
-            # print "-------------------------"
-            # print imagePoints
-            # print "-------------------------"
 
         if(running):
             boxes = frameTrackingData2BoxData(dataFile[k,:])
@@ -239,36 +202,18 @@ def showFloorTrackingData():
             for k in range(0,3):
                 aBox = boxes[k]
                 cv2.rectangle(imgOrig, aBox[0], aBox[1], boxColors[k])
-                if k == 1: # only use the legs
-                    x1, y1 = Calc.getRectangleLowerCenter(aBox[0], aBox[1])
-                    # x1 = aBox[1][0]
-                    # y1 = aBox[1][1]
-                    colr = (255, 0, 0)
-                    # for p in imagePoints:
-                    #     for x in p:
-                    #         print ">>>>>" + str(x[0]) + ", " + str(x[1])
-                    #         x2, y2 = displayTrace(H, x[0], x[1])
-                    #         print "-----------" + str(x2) + ", " + str(y2)
-                    #         cv2.circle(map, (int(x2), int(y2)), 3, colr, thickness=1, lineType=8, shift=0)
-                    #     colr = (0, 255, 0)
-                    x2, y2 = displayTrace(H, x1, y1)
-                    # print "new coords: (" + str(x2) + ", " + str(y2) + ")"
-                    cv2.circle(map, (int(x2), int(y2)), 1, (0, 0, 255), thickness=0, lineType=8, shift=0)
-
-
+                if k == 1: # only use the "legs"
+                    x1, y1 = Calc.getRectangleLowerCenter(aBox[0], aBox[1]) # calculate the center of the "legs" rectangle
+                    displayTrace(map, H, x1, y1, curData, m-2)
 
             cv2.imshow("boxes",imgOrig)
-            cv2.imshow("map", map)
-            cv2.waitKey(20)
-            # cv2.waitKey(0)
+            cv2.waitKey(DELAY)
 
 def main():
     showFloorTrackingData()
     # simpleTextureMap()
     # realisticTexturemap(0,0,0)
     # texturemapGridSequence()
-
-    # test()
 
 if __name__ == "__main__":
     main()
