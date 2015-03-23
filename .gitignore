@@ -3,5 +3,8 @@ __pycache__/
 
 __init__.py
 
-Sequences/
-bergar/Sequences/
+# Image / video files
+Book/
+GridVideos/
+GroundFloorData/
+Images/
