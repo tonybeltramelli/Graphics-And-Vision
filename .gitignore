@@ -11,3 +11,8 @@ Images/
 SavedFiles/
 
 .idea/
+
+# Bergar "trash" files
+bergar/Assignment2.py
+bergar/calibrationExample.py
+bergar/SIGBTools.py
