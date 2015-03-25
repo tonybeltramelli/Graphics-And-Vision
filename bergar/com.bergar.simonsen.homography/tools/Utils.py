@@ -140,39 +140,9 @@ def getHomographyFromMouse(I1,I2,N=4):
     ip1 = np.array([[x,y] for (x,y) in imagePoints[0]])
     ip2 = np.array([[x,y] for (x,y) in imagePoints[1]])
 
-    # print "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-    # print ip1
-    # print "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-    # print ip2
-    # print "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
-    p1 = array([[85.74780454, 194.09873055], [258.12098948, 174.51086862], [270.36340318, 192.13994435], [89.17568038, 218.0938614]])
-    p2 = array([[332.45191722, 179.62120685], [330.00343448, 100.04551778], [338.57312408, 103.71824189], [338.57312408, 179.62120685]])
-
-    # p1 = array([[85.74780454, 194.09873055], [258.12098948, 174.51086862], [270.36340318, 192.13994435]])
-    # p2 = array([[332.45191722, 179.62120685], [330.00343448, 100.04551778], [338.57312408, 103.71824189]])
-
-
-
-
-    # print ip1
-    # print ip2
-
-    # H = estimateHomography(ip1, ip2)
-    H = estimateHomography(p1, p2)
-    # H = hFromPoints(p1, p2)
-    # R, tx, ty = computeRigidTransform(ip1, ip2)
-
-    # print "-----------------------"
-    # print H1
-    # print "-----------------------"
-    # print H
-
-
-
     #Calculate homography
+    H = estimateHomography(ip1, ip2)
     # H,mask = cv2.findHomography(ip1, ip2)
-    # H,mask = cv2.findHomography(p1, p2)
     return H, imagePoints
 
 def getCircleSamples(center=(0,0),radius=1,nPoints=30):
