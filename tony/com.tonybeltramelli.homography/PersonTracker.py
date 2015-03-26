@@ -10,10 +10,12 @@ class PersonTracker:
     _map = None
     _homography = None
     _counter = 0
+    _output_path = ""
 
-    def __init__(self, video_path, map_path, tracking_data_path):
+    def __init__(self, video_path, map_path, tracking_data_path, output_path):
         self._data = self._get_tracking_data(tracking_data_path)
         self._map = UMedia.get_image(map_path)
+        self._output_path = output_path
 
         UMedia.load_media(video_path, self.process)
 
@@ -26,14 +28,15 @@ class PersonTracker:
         x, y = self._get_person_position()
         x, y = UMath.get_2D_transform_from_homography(x, y, self._homography)
 
-        cv2.circle(self._map, (x, y), 5, (0, 255, 0))
+        cv2.circle(self._map, (x, y), 3, (0, 255, 0))
 
-        UMedia.show(self._map)
+        UMedia.show(self._input, self._map)
 
     def _get_person_position(self):
         self._counter += 1
 
         if self._counter >= len(self._data):
+            cv2.imwrite(self._output_path, self._map)
             return 0, 0
 
         row = self._data[self._counter]
@@ -48,8 +51,6 @@ class PersonTracker:
 
         cv2.circle(self._input, (base_x, base_y), 1,  (0, 255, 255))
 
-        #UMedia.show(self._input)
-
         return base_x, base_y
 
     def _get_tracking_data(self, tracking_data_path):
@@ -58,11 +59,11 @@ class PersonTracker:
 
         boxes = []
         for i in range(length):
-            boxes.append(self._get_tracking_box(data[i, :]))
+            boxes.append(self._get_tracking_boxes(data[i, :]))
 
         return boxes
 
-    def _get_tracking_box(self, data):
+    def _get_tracking_boxes(self, data):
         points = [(int(data[i]), int(data[i + 1])) for i in range(0, len(data) - 1, 2)]
         boxes = []
 
