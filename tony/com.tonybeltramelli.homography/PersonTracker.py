@@ -2,11 +2,13 @@ __author__ = 'tbeltramelli'
 
 from UMedia import *
 from Filtering import *
+from UMath import *
 
 class PersonTracker:
-    _result = None
+    _input = None
     _data = None
     _map = None
+    _homography = None
     _counter = 0
 
     def __init__(self, video_path, map_path, tracking_data_path):
@@ -16,30 +18,37 @@ class PersonTracker:
         UMedia.load_media(video_path, self.process)
 
     def process(self, img):
-        self._result = img
+        self._input = img
 
-        #homography, points = self._get_homography_from_mouse([img, self._map])
+        if self._homography is None:
+            self._homography = self._get_homography_from_mouse([img, self._map])
 
-        #A = array([[points[0]])
+        x, y = self._get_person_position()
+        x, y = UMath.get_2D_transform_from_homography(x, y, self._homography)
 
-        self._get_person_position()
+        cv2.circle(self._map, (x, y), 5, (0, 255, 0))
+
+        UMedia.show(self._map)
 
     def _get_person_position(self):
         self._counter += 1
+
+        if self._counter >= len(self._data):
+            return 0, 0
 
         row = self._data[self._counter]
         colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
 
         for i, box in enumerate(row):
-            cv2.rectangle(self._result, box[0], box[1], colors[i])
+            cv2.rectangle(self._input, box[0], box[1], colors[i])
 
         box = row[len(row)-1]
         base_x = box[0][0] + ((box[1][0] - box[0][0]) / 2)
         base_y = box[1][1]
 
-        cv2.circle(self._result, (base_x, base_y), 1,  (0, 255, 255))
+        cv2.circle(self._input, (base_x, base_y), 1,  (0, 255, 255))
 
-        UMedia.show(self._result)
+        #UMedia.show(self._input)
 
         return base_x, base_y
 
@@ -90,4 +99,4 @@ class PersonTracker:
         points2 = np.array([[x, y] for (x, y) in image_points[len(image_points) - 1]])
 
         homography, mask = cv2.findHomography(points1, points2)
-        return homography, image_points
+        return homography

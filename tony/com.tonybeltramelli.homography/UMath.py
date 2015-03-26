@@ -2,6 +2,7 @@ __author__ = 'tbeltramelli'
 
 import numpy as np
 import math
+from pylab import *
 
 class UMath:
 
@@ -17,6 +18,17 @@ class UMath:
     def get_circle_samples(center=(0, 0), radius=1, point_number=30):
         s = np.linspace(0, 2 * math.pi, point_number)
         return [(radius * np.cos(t) + center[0], radius * np.sin(t) + center[1], np.cos(t), np.sin(t)) for t in s]
+
+    @staticmethod
+    def get_2D_transform_from_homography(x, y, homography):
+        a = array([[x], [y], [1]])
+
+        result = np.dot(homography, a)
+
+        x = result[0] / result[2]
+        y = result[1] / result[2]
+
+        return x, y
 
     @staticmethod
     def get_line_coordinates(p1, p2):
