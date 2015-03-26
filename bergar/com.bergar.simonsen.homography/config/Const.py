@@ -30,6 +30,7 @@ TRACKING_DATA       = GROUND_FLOOR_DATA + "trackingdata.dat"
 CALIBRATION_PATTERN = IMAGES + "CalibrationPattern.png"
 ITU_LOGO            = IMAGES + "ITULogo.jpg"
 ITU_MAP             = IMAGES + "ITUMap.bmp"
+TEXTURE             = IMAGES + "texture.jpg"
 
 # Folder for saving files
 SAVE_FOLDER         = PREFIX + "SavedFiles/"
@@ -44,5 +45,8 @@ MAX_FILES           = 100
 
 # Global variables
 DELAY               = 1
-SAVE_MAP_IMAGE      = True
-SAVE_H_M_G          = True
+SAVE_MAP_IMAGE      = False
+SAVE_H_M_G          = False
+
+# Testing
+PML_AUTO_POINTS     = True
