@@ -3,10 +3,13 @@ __author__ = 'tbeltramelli'
 from UMedia import *
 from AHomography import *
 from Filtering import *
+from UInteractive import *
 
 class TextureMapper(AHomography):
     _result = None
     _texture = None
+    _map = None
+    _texture_position = None
 
     def map(self, video_path, texture_path, is_automatic):
         self._texture = UMedia.get_image(texture_path)
@@ -17,8 +20,10 @@ class TextureMapper(AHomography):
             UMedia.load_media(video_path, self.process_with_homography)
 
     def process_with_homography(self, img):
-        self.build_homography([self._texture, img])
-        self._result = self.get_mapped_texture(self._texture, img)
+        if self._homography is None:
+            self._homography = self.get_homography_part_from_mouse(self._texture, img)
+
+        self._result = self.get_mapped_texture(self._texture, img, self._homography)
 
         UMedia.show(self._result)
 
@@ -43,9 +48,52 @@ class TextureMapper(AHomography):
                     cv2.circle(self._result, corner, 10, (255, 0, 0))
                 corners.append(corner)
 
-            self.build_homography_from_coordinates(self._texture, corners)
-            self._result = self.get_mapped_texture(self._texture, self._result)
+            self._homography = self.get_homography_from_coordinates(self._texture, corners)
+            self._result = self.get_mapped_texture(self._texture, self._result, self._homography)
 
         UMedia.show(self._result)
+
+    def realistic_map(self, video_path, map_path, texture_path):
+        self._map = UMedia.get_image(map_path)
+        self._texture = UMedia.get_image(texture_path)
+
+        UMedia.load_media(video_path, self.process_realistically)
+
+    def process_realistically(self, img):
+        self._result = img
+
+        if self._homography is None:
+            self._homography = self.get_homography_all_from_mouse([self._map, img])
+
+        x, y = self.get_texture_position(self._map)
+        x, y = self.get_2d_transform_from_homography(x, y, self._homography)
+
+        self.apply_texture(1, x, y, self._homography)
+
+        UMedia.show(self._result)
+
+    def apply_texture(self, scale, x, y, homography):
+        height, width, layers = self._texture.shape
+
+        w = width * scale
+        h = height * scale
+
+        p1 = self.get_2d_transform_from_homography(x - (w/2), y - (h/2), homography)
+        p2 = self.get_2d_transform_from_homography(x + (w/2), y - (h/2), homography)
+        p3 = self.get_2d_transform_from_homography(x - (w/2), y + (h/2), homography)
+        p4 = self.get_2d_transform_from_homography(x + (w/2), y + (h/2), homography)
+
+        corners = [p1, p2, p3, p4]
+
+        h = self.get_homography_from_coordinates(self._texture, corners)
+        self._result = self.get_mapped_texture(self._texture, self._result, h)
+
+    def get_texture_position(self, img):
+        if self._texture_position is None:
+            self._texture_position = UInteractive.select_points_in_images([img], 1)[0][0]
+
+        return self._texture_position
+
+
 
 

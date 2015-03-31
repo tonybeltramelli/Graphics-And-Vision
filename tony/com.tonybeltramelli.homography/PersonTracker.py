@@ -21,10 +21,11 @@ class PersonTracker(AHomography):
     def process(self, img):
         self._input = img
 
-        self.build_homography([img, self._map])
+        if self._homography is None:
+            self._homography = self.get_homography_all_from_mouse([img, self._map])
 
         x, y = self.get_person_position()
-        x, y = self.get_2d_transform(x, y)
+        x, y = self.get_2d_transform_from_homography(x, y, self._homography)
 
         cv2.circle(self._map, (x, y), 3, (0, 255, 0))
 
