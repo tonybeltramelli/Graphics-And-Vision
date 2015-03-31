@@ -27,8 +27,6 @@ class AHomography:
         return homography
 
     def get_homography_from_coordinates(self, img, points):
-        print(points)
-        print("-----")
         points1 = self.get_points_from_image(img)
         points2 = np.array([[x, y] for (x, y) in points])
 

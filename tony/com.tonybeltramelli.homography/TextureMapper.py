@@ -13,6 +13,7 @@ class TextureMapper(AHomography):
 
     def map(self, video_path, texture_path, is_automatic):
         self._texture = UMedia.get_image(texture_path)
+        self._homography = None
 
         if is_automatic:
             UMedia.load_media(video_path, self.process_with_chessboard)
@@ -53,9 +54,10 @@ class TextureMapper(AHomography):
 
         UMedia.show(self._result)
 
-    def realistic_map(self, video_path, map_path, texture_path):
+    def map_realistic_map(self, video_path, map_path, texture_path):
         self._map = UMedia.get_image(map_path)
         self._texture = UMedia.get_image(texture_path)
+        self._homography = None
 
         UMedia.load_media(video_path, self.process_realistically)
 
