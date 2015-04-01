@@ -11,6 +11,9 @@ class TextureMapper(AHomography):
     _map = None
     _texture_position = None
 
+    def __init__(self, homography_output_path):
+        self._homography_output_path = homography_output_path
+
     def map(self, video_path, texture_path, is_automatic):
         self._texture = UMedia.get_image(texture_path)
         self._homography = None
@@ -65,12 +68,13 @@ class TextureMapper(AHomography):
         self._result = img
 
         if self._homography is None:
-            self._homography = self.get_homography_all_from_mouse([self._map, img])
+            self.define_map_homography([img, self._map])
+            self._homography = np.linalg.inv(self._homography)
 
         x, y = self.get_texture_position(self._map)
         x, y = self.get_2d_transform_from_homography(x, y, self._homography)
 
-        self.apply_texture(1, x, y, self._homography)
+        self.apply_texture(0.5, x, y, self._homography)
 
         UMedia.show(self._result)
 
@@ -95,7 +99,4 @@ class TextureMapper(AHomography):
             self._texture_position = UInteractive.select_points_in_images([img], 1)[0][0]
 
         return self._texture_position
-
-
-
 

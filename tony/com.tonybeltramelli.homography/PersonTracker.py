@@ -9,20 +9,20 @@ class PersonTracker(AHomography):
     _data = None
     _map = None
     _counter = 0
-    _output_path = ""
+    _tracking_output_path = ""
 
-    def __init__(self, video_path, map_path, tracking_data_path, output_path):
+    def __init__(self, video_path, map_path, tracking_data_path, tracking_output_path, homography_output_path):
         self._data = self.get_tracking_data(tracking_data_path)
         self._map = UMedia.get_image(map_path)
-        self._output_path = output_path
+        self._tracking_output_path = tracking_output_path
+        self._homography_output_path = homography_output_path
 
         UMedia.load_media(video_path, self.process)
 
     def process(self, img):
         self._input = img
 
-        if self._homography is None:
-            self._homography = self.get_homography_all_from_mouse([img, self._map])
+        self.define_map_homography([img, self._map])
 
         x, y = self.get_person_position()
         x, y = self.get_2d_transform_from_homography(x, y, self._homography)
@@ -35,7 +35,7 @@ class PersonTracker(AHomography):
         self._counter += 1
 
         if self._counter >= len(self._data):
-            cv2.imwrite(self._output_path, self._map)
+            cv2.imwrite(self._tracking_output_path, self._map)
             return 0, 0
 
         row = self._data[self._counter]

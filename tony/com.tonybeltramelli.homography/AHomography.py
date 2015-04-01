@@ -4,6 +4,7 @@ import cv2
 from UInteractive import *
 
 class AHomography:
+    _homography_output_path = None
     _homography = None
 
     def get_homography_all_from_mouse(self, images, n=4):
@@ -54,3 +55,11 @@ class AHomography:
         height, width, layers = img.shape
 
         return np.array([[0, 0], [width, 0], [0, height], [width, height]])
+
+    def define_map_homography(self, images):
+        if self._homography is None:
+            try:
+                self._homography = np.load(self._homography_output_path + ".npy")
+            except IOError, e:
+                self._homography = self.get_homography_all_from_mouse(images)
+                np.save(self._homography_output_path, self._homography)
