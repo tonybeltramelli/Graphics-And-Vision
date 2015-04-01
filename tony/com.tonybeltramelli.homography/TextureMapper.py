@@ -57,7 +57,7 @@ class TextureMapper(AHomography):
 
         UMedia.show(self._result)
 
-    def map_realistic_map(self, video_path, map_path, texture_path):
+    def map_realistically(self, video_path, map_path, texture_path):
         self._map = UMedia.get_image(map_path)
         self._texture = UMedia.get_image(texture_path)
         self._homography = None
