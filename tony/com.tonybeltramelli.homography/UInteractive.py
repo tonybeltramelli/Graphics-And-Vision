@@ -4,6 +4,7 @@ import cv2
 from pylab import *
 from UMedia import *
 
+
 class UInteractive:
 
     @staticmethod

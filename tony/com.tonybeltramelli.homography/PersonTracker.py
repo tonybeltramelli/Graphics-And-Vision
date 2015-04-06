@@ -1,6 +1,5 @@
 __author__ = 'tbeltramelli'
 
-from UMedia import *
 from AHomography import *
 
 

@@ -1,9 +1,9 @@
 __author__ = 'tbeltramelli'
 
-from UMedia import *
 from AHomography import *
 from Filtering import *
 from UInteractive import *
+
 
 class TextureMapper(AHomography):
     _result = None
@@ -38,9 +38,9 @@ class TextureMapper(AHomography):
         corners = []
 
         img = Filtering.get_gray_scale_image(self._result)
-        found, coordinates = cv2.findChessboardCorners(img, pattern_size)
+        is_found, coordinates = cv2.findChessboardCorners(img, pattern_size)
 
-        if found:
+        if is_found:
             term = cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT, 30, 0.1
             cv2.cornerSubPix(img, coordinates, (5, 5), (-1, -1), term)
             if to_draw:

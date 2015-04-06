@@ -1,7 +1,7 @@
 __author__ = 'tbeltramelli'
 
-import cv2
 from UInteractive import *
+
 
 class AHomography:
     _homography_output_path = None
