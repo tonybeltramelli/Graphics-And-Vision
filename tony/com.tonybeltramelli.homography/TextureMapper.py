@@ -44,7 +44,7 @@ class TextureMapper(AHomography):
             term = cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT, 30, 0.1
             cv2.cornerSubPix(img, coordinates, (5, 5), (-1, -1), term)
             if to_draw:
-                cv2.drawChessboardCorners(self._result, pattern_size, coordinates, found)
+                cv2.drawChessboardCorners(self._result, pattern_size, coordinates, is_found)
 
             for p in pos:
                 corner = int(coordinates[p, 0, 0]), int(coordinates[p, 0, 1])
