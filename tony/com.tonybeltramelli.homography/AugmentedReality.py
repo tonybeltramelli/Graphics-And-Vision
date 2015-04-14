@@ -86,10 +86,9 @@ class AugmentedReality:
         image_points_position = np.array(image_points_position)
         pattern_points_position = np.array(pattern_points_position)
 
-        camera = Camera(hstack((camera_matrix, dot(camera_matrix, np.array([[0], [0], [-1]])))))
-
         homography = AHomography.estimate_homography(pattern_points_position, image_points_position)
 
+        camera = Camera(hstack((camera_matrix, dot(camera_matrix, np.array([[0], [0], [-1]])))))
         camera = Camera(dot(homography, camera.P))
 
         calibration_inverse = np.linalg.inv(camera_matrix)
