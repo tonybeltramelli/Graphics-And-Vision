@@ -65,3 +65,14 @@ class UMath:
         all_y = result[:, 1]
 
         return result
+
+    @staticmethod
+    def to_homogenious(points):
+        return vstack((points, ones((1, points.shape[1]))))
+
+    @staticmethod
+    def get_rotation_translation_matrix(rotation_factor):
+        rotation_1, rotation_2, translation = tuple(np.hsplit(rotation_factor, 3))
+        rotation_3 = cross(rotation_1.T, rotation_2.T).T
+
+        return np.hstack((rotation_1, rotation_2, rotation_3, translation))

@@ -73,3 +73,9 @@ class CameraCalibrator:
     def get_undistorted_image(self, img):
         img = cv2.undistort(img, self._camera_matrix, self._distortion_coefficient)
         return img
+
+    def load_calibration(self):
+        camera_matrix = np.load(self._output_path + "/camera_matrix.npy")
+        distortion_coefficient = np.load(self._output_path + "/distortion_coefficient.npy")
+
+        return camera_matrix, distortion_coefficient
