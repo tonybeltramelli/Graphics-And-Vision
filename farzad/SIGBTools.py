@@ -707,7 +707,7 @@ def RecordVideoFromCamera():
     
     print I.shape
     H,W,Z=I.shape
-    fourcc = cv2.VideoWriter_fourcc('D', 'I', 'V', '3')
+    fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
     writer = cv2.VideoWriter('Pattern.avi', fourcc, 10.0, (W,H), True)
     cv2.namedWindow("input")
     
