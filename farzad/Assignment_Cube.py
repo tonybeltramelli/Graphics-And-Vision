@@ -17,6 +17,16 @@ def DrawLines(img, points):
         cv2.line(img, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 5)
     return img
 
+def cross(a, b):
+    c = [a[1]*b[2] - a[2]*b[1],
+         a[2]*b[0] - a[0]*b[2],
+         a[0]*b[1] - a[1]*b[0]]
+
+    return c
+
+
+
+
 def update(img):
     image = copy(img)
 
@@ -27,9 +37,42 @@ def update(img):
     if (ProcessFrame):
         ''' <005> Here Find the Chess pattern in the current frame'''
         patternFound = True
+        drawContours = True;
+        mI,nI,t = image.shape
+        pattern_size = (9, 6)
+        idx = [0,8,45,53] 
+        image = cv2.pyrDown(image)
+        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+        found, corners = cv2.findChessboardCorners(gray, pattern_size)
+        if found:
+            term = ( cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT, 30, 0.1 )
+            cv2.cornerSubPix(gray, corners, (5, 5), (-1, -1), term)
+            #cv2.drawChessboardCorners(image, pattern_size, corners, found)
+
+            for t in idx:
+                cv2.circle(image,(int(corners[t,0,0]),int(corners[t,0,1])),10,(255,t,t))
+                    
 
         if patternFound == True:
             ''' <006> Here Define the cameraMatrix P=K[R|t] of the current frame'''
+            points1=[]
+            for t in idx:
+                points1.append((int(img_points_first[t,0]),int(img_points_first[t,1])))            
+            
+            points2=[]
+            for t in idx:
+                points2.append((int(corners[t,0,0]),int(corners[t,0,1])))        
+            
+            
+            H_2_1=SIGBTools.estimateHomography(points1, points2)
+            H_2_cs=np.dot(H_2_1,H_1_cs)
+            
+            #calculate camera matrix for current view
+            A = np.dot(linalg.inv(camera_matrix),H_2_cs)
+            A = np.array([A[:,0],A[:,1],cross(A[:,0],A[:,1]),A[:,2]])
+            P2_Method1= np.dot(camera_matrix,A)     
+            
+            
 
             if ShowText:
                 ''' <011> Here show the distance between the camera origin and the world origin in the image'''
@@ -277,11 +320,16 @@ loadCamParam()
 
 def calcCamP1():
     
-    global cameraP
+    global cameraP,H_1_cs
     
     rotationFirst,_=cv2.Rodrigues(rotatioVectors[0])
     extrinsic=np.concatenate((rotationFirst, translationVectors[0]),axis=1)
     cameraP=np.dot(camera_matrix,extrinsic)
+    #H_1_cs=np.concatenate((cameraP[:,0:2],[cameraP[:,3]]),axis=1)
+    cameraPcopy=cameraP
+    H_1_cs=np.delete(cameraPcopy, 2, 1)
+    
+    
 
 calcCamP1()
 
@@ -289,12 +337,13 @@ calcCamP1()
 
 def showChessCornres():
     nimg=cv2.imread('01.png')
-    nimg=cv2.undistort(nimg, camera_matrix, distortionCoefficient )
+    #nimg=cv2.undistort(nimg, camera_matrix, distortionCoefficient )
     cv2.namedWindow('Chessboard Corners', cv2.WINDOW_AUTOSIZE)
     
     for point in obj_points[0]:
         
         point=np.append(point,[1])
+        print point
         chessboardPoint=np.dot(cameraP,point.T)
         if chessboardPoint[2]<>0:
             chessboardPoint=chessboardPoint/chessboardPoint[2]    
