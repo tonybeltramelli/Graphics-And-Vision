@@ -65,8 +65,6 @@ class AugmentedReality:
     def augment(self, img, pattern_size=(9, 6)):
         camera_matrix, distortion_coefficient = self._camera_calibrator.load_calibration()
 
-        pos = np.array([0, pattern_size[0] - 1, pattern_size[0] * (pattern_size[1] - 1), (pattern_size[0] * pattern_size[1]) - 1])
-
         calibration_pattern = cv2.pyrDown(self._pattern)
         calibration_pattern = Filtering.get_gray_scale_image(calibration_pattern)
 
@@ -78,6 +76,8 @@ class AugmentedReality:
 
         image_points_position = []
         pattern_points_position = []
+
+        pos = np.array([0, pattern_size[0] - 1, pattern_size[0] * (pattern_size[1] - 1), (pattern_size[0] * pattern_size[1]) - 1])
 
         for i in pos:
             image_points_position.append(img_corners[i][0])
