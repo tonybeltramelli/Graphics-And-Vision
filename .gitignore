@@ -4,16 +4,10 @@ __pycache__/
 __init__.py
 
 # Image / video files
-Book/
-GridVideos/
-GroundFloorData/
-Images/
-SavedFiles/
+bergar/Images/
+bergar/Classes/
+bergar/Example/
+bergar/Videos/
 
 .idea/
-
-# Bergar "trash" files
-bergar/Assignment2.py
-bergar/calibrationExample.py
-bergar/SIGBTools.py
 
