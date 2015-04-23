@@ -20,7 +20,7 @@ __version__ = '$Revision: 2015040501 $'
 ########################################################################
 from Cameras import Cameras
 
-from Setting.ClassProperty import ClassProperty
+from Settings.ClassProperty import ClassProperty
 
 ########################################################################
 class StereoCameras(object):

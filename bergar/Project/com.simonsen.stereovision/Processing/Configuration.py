@@ -21,7 +21,7 @@ __version__ = '$Revision: 2015040701 $'
 ########################################################################
 from Config import Config
 
-from Setting.ClassProperty import ClassProperty
+from Settings.ClassProperty import ClassProperty
 
 ########################################################################    
 class Configuration(object):

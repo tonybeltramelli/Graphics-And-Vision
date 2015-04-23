@@ -19,6 +19,7 @@ __version__ = '$Revision: 2015040501 $'
 
 ########################################################################
 import cv2
+from Settings import Constant as C
 
 ########################################################################
 class ExceptionError(RuntimeError):
@@ -77,7 +78,16 @@ class Camera(object):
         """Camera Class Constructor."""
         # Create an instance of a video capture device based on index argument.
         # SIGB: Use a private attribute called "self.__camera".
-        self.__camera = cv2.VideoCapture(index)
+
+
+        # load video
+        if index < 2:
+            vid = C.VIDEO_LEFT_1
+        else:
+            vid = C.VIDEO_RIGHT_1
+
+        # self.__camera = cv2.VideoCapture(index)
+        self.__camera = cv2.VideoCapture(vid)
 
         # Save the index value in the "self.Index" property.
         # SIGB: This class does not have a function to write directly in "self.Index" property.

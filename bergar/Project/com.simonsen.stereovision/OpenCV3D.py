@@ -21,6 +21,7 @@ __version__ = '$Revision: 2015040601 $'
 import cv2
 import sys
 import numpy as np
+from pylab import *
 
 from collections import deque
 from threading   import Thread
@@ -28,6 +29,7 @@ from threading   import Thread
 from Cameras.CameraEnum       import CameraEnum
 from Cameras.StereoCameras    import StereoCameras
 from Processing.Configuration import Configuration
+from Cameras                  import CamerasParameters
 
 ########################################################################
 class OpenCV3D(object):
@@ -97,6 +99,16 @@ end_header
         """Set that the fundamental matrix process is running."""
         self.__isFrozen = value
 
+    @property
+    def IsDrawing(self):
+        """Check if the system is drawing some object."""
+        return self.__isDrawing
+
+    @IsDrawing.setter
+    def IsDrawing(self, value):
+        """Set that the system will draw objects."""
+        self.__isDrawing = value
+
     #----------------------------------------------------------------------#
     #                      OpenCV3D Class Constructor                      #
     #----------------------------------------------------------------------#
@@ -105,7 +117,7 @@ end_header
         self.Clear()
 
     def __del__(self):
-        """OpenCV3D Class Destructor."""    
+        """OpenCV3D Class Destructor."""
         # Stops the main thread system.
         self.Stop()
 
@@ -152,7 +164,7 @@ end_header
 
         # Repetition statement for analyzing each captured image.
         while True:
-    
+
             # Check if the fundamental matrix process is running.
             if not self.IsFrozen:
 
@@ -181,6 +193,7 @@ end_header
 
                 # Combine two stereo images in only one window.
                 self.Image = self.__CombineImages(leftImage, rightImage, 0.5)
+                # self.Image = self.__CombineImages(leftImage, rightImage, 1.0) # TODO: Change back
                 cv2.imshow("Original", self.Image)
 
             # Check what the user wants to do.
@@ -203,6 +216,108 @@ end_header
         # Close all OpenCV windows.
         cv2.destroyAllWindows()
 
+    def estimateFundamental(self, x1, x2):
+        n = x1.shape[1]
+        if x2.shape[1] != n:
+            raise ValueError("Number of points do not match.")
+
+        # Build matrix for equation
+        A = np.zeros((n, 9))
+        for i in range(n):
+            A[i] = [
+                x1[0, i] * x2[0, i], x1[0, i] * x2[1, i], x1[0, i] * x2[2, i],
+                x1[1, i] * x2[0, i], x1[1, i] * x2[1, i], x1[1, i] * x2[2, i],
+                x1[2, i] * x2[0, i], x1[2, i] * x2[1, i], x1[3, i] * x2[2, i],
+                ]
+
+        # Compute linear least square solution
+        U, S, V = linalg.svd(A)
+        F = V[-1].reshape(3, 3)
+
+        # Constrain F
+        # Make rank 2 by zeroing out last singular value
+        U, S, V = linalg.svd(F)
+        S[2] = 0
+        F = dot(U, dot(diag(S), V))
+
+        return F
+
+    def getSelectedPoints(self, points):
+        print points
+        x1 = points[::2]
+        x2 = points[1::2]
+        print "---------------------------"
+        print x1
+        print "---------------------------"
+        print x2
+        return x1, x2
+
+    def computeEpipole(self, F):
+        U, S, V = linalg.svd(F)
+        e = V[-1]
+        return e / e[2]
+
+    def getHardCodedPoints2(self):
+        p = array([
+            [4.08000000e+02, 2.18000000e+02],
+            [9.56000000e+02, 2.92000000e+02],
+            [3.66000000e+02, 6.84000000e+02],
+            [9.00000000e+02, 7.58000000e+02],
+            [1.05000000e+03, 3.22000000e+02],
+            [1.60400000e+03, 4.10000000e+02],
+            [1.09200000e+03, 6.92000000e+02],
+            [1.64400000e+03, 7.82000000e+02],
+            [3.62000000e+02, 1.82000000e+02],
+            [9.10000000e+02, 2.50000000e+02],
+            [8.98000000e+02, 8.40000000e+01],
+            [1.45200000e+03, 1.72000000e+02],
+            [1.07400000e+03, 1.34000000e+02],
+            [1.63200000e+03, 2.20000000e+02],
+            [8.86000000e+02, 2.82000000e+02],
+            [1.44600000e+03, 3.66000000e+02]
+        ])
+        return p
+    def getHardCodedPoints(self):
+        p = array([
+            [  4.08000000e+02, 2.18000000e+02, 1.00000000e+00],
+            [  9.56000000e+02, 2.92000000e+02, 1.00000000e+00],
+            [  3.66000000e+02, 6.84000000e+02, 1.00000000e+00],
+            [  9.00000000e+02, 7.58000000e+02, 1.00000000e+00],
+            [  1.05000000e+03, 3.22000000e+02, 1.00000000e+00],
+            [  1.60400000e+03, 4.10000000e+02, 1.00000000e+00],
+            [  1.09200000e+03, 6.92000000e+02, 1.00000000e+00],
+            [  1.64400000e+03, 7.82000000e+02, 1.00000000e+00],
+            [  3.62000000e+02, 1.82000000e+02, 1.00000000e+00],
+            [  9.10000000e+02, 2.50000000e+02, 1.00000000e+00],
+            [  8.98000000e+02, 8.40000000e+01, 1.00000000e+00],
+            [  1.45200000e+03, 1.72000000e+02, 1.00000000e+00],
+            [  1.07400000e+03, 1.34000000e+02, 1.00000000e+00],
+            [  1.63200000e+03, 2.20000000e+02, 1.00000000e+00],
+            [  8.86000000e+02, 2.82000000e+02, 1.00000000e+00],
+            [  1.44600000e+03, 3.66000000e+02, 1.00000000e+00]
+        ])
+
+        return p
+
+    def plotEpipolarLine(self, im, F, x, epipole=None, showEpipole=True):
+        m,n = im.shape[:2]
+        line = dot(F, x)
+
+        t = linspace(0, n, 100)
+        lt = array([(line[2] + line[0] * tt) / (-line[1]) for tt in t])
+
+        # take only line points inside the image
+        ndx = (lt >= 0) & (lt < m)
+        plot(t[ndx], lt[ndx], linewidth=2)
+
+        if showEpipole:
+            if epipole is None:
+                epipole = self.computeEpipole(F)
+            # plot(epipole[0] / epipole[2], epipole[1] / epipole[2], 'r*')
+        # return epipole[0] / epipole[2], epipole[1] / epipole[2]
+        return t[ndx], lt[ndx]
+
+
     def __FundamentalMatrix(self, point):
         # Check if the image is frozen.
         # SIGB: The user can frozen the input image presses "f" key.
@@ -214,11 +329,69 @@ end_header
                 # Get all points selected by the user.
                 points = np.asarray(self.PointsQueue, dtype=np.float32)
 
+                # Hardcoded points
+                # TODO: Remove when done
+                points = self.getHardCodedPoints()
+
                 # <000> Get the selected points from the left and right images.
+                left, right = self.getSelectedPoints(points)
+
+                # TODO: Remove ?
+                x1 = np.float32(left)
+                x2 = np.float32(right)
+                x1 = np.delete(x1, 2, 1)
+                x2 = np.delete(x2, 2, 1)
+
 
                 # <001> Estimate the Fundamental Matrix.
+                # F = self.estimateFundamental(x1, x2)
+                F, mask = cv2.findFundamentalMat(x1, x2, cv2.cv.CV_FM_8POINT)
 
-                # <002> Save the Fudamental Matrix in the F attribute of the CamerasParameters class.
+                # <002> Save the Fundamental Matrix in the F attribute of the CamerasParameters class.
+                CamerasParameters.CamerasParameters.F = F
+
+                # self.plotEpipolarLine(self.Image, F, [814, 148, 1])
+
+                # le = self.computeEpipole(F.T)
+                # re = self.computeEpipole(F)
+                #
+                # xl = le[0]
+                # yl = le[1]
+                # xl = int(xl)
+                # yl = int(yl)
+                #
+                # xr = re[0]
+                # yr = re[1]
+                # xr = int(xr)
+                # yr = int(yr)q
+                #
+                # cv2.circle(self.Image, (xl, yl), 600, (255, 255, 0))
+                # cv2.circle(self.Image, (xr, yr), 600, (255, 0, 255))
+                # cv2.circle(self.Image, (814, 148), 3, (0, 0, 255))
+
+                e = self.computeEpipole(F)
+
+                print "-------- PRE"
+                print left
+
+                lp = array(None)
+
+                # for i in range(8):
+                #     lp.append(self.plotEpipolarLine(self.Image, F, left[i], e, True))
+                # lp.append([1, 100])
+                # lp.append([100, 200])
+                # lp.append([200, 250])
+                # lp.append([250, 10])
+                # lp.append([10, 99])
+                cv2.cv.ComputeCorrespondEpilines(left, self.Image, F, lp)
+
+                print "LINE_POINTS"
+                print lp
+
+                for i in range(len(lp)):
+                    if i > 0:
+                        cv2.line(self.Image, (int(lp[i-1][0]), int(lp[i-1][1])), (int(lp[i][0]), int(lp[i][1])), (255, 255, 0), 3)
+
 
                 # Get each point from left image.
                 # for point in left:
@@ -226,7 +399,7 @@ end_header
                     # <003> Estimate the epipolar line.
 
                     # <004> Define the initial and final points of the line.
-                
+
                     # <005> Draws the epipolar line in the input image.
 
                 # Get each point from right image.
@@ -294,6 +467,50 @@ end_header
         # Combine two stereo images in only one window.
         stereo = self.__CombineImages(leftStereo, rightStereo, 0.5)
         cv2.imshow("Stereo", stereo)
+
+    def __Augmentation(self, corners, image, camera=CameraEnum.LEFT):
+        """Draws some augmentated object in the input image."""
+        # Get The outer vector contains as many elements as the number of the pattern views.
+        objectPoints = Configuration.Instance.Pattern.CalculatePattern()
+
+        # <021> Prepares the external parameters.
+
+        # <022> Get the points of the coordinate system.
+
+        # Defines the pose estimation of the coordinate system.
+        points = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, points, cameraMatrix, distCoeffs)
+
+        # <025> Draws the coordinate system over the chessboard pattern.
+
+        # <026> Get the points of the cube.
+
+        # <027> Defines the pose estimation of the cube.
+
+        # <028> Draws ground floor in green color.
+        # SIGB: Uses the last four points to do this.
+
+        # <029> Draw pillars in blue color.
+        # SIGB: Uses the intersections between the first four points and the last four points.
+
+        # <030> Draw top layer in red color.
+        # SIGB: Uses the first four points to do this.
+
+        # Check if it is necessary to apply a texture mapping.
+        if camera == CameraEnum.LEFT:
+            return
+
+        # Define each correspoding cube face.
+        cube = Configuration.Instance.Augmented.Cube
+        TopFace   = cube[4:]
+        UpFace    = np.vstack([cube[5], cube[1:3], cube[6]])
+        DownFace  = np.vstack([cube[7], cube[3],   cube[0], cube[4]])
+        LeftFace  = np.vstack([cube[4], cube[0:2], cube[5]])
+        RightFace = np.vstack([cube[6], cube[2:4], cube[7]])
+
+        # Threshould used for selecting which cube faces will be drawn.
+        threshold = 88
+
+        # <035> Applies the texture mapping over all cube sides.
 
     def __SavePLY(self, disparity, image):
         # Check if the system is calibrated.
