@@ -13,6 +13,7 @@
 #<!-- Change     : 09/04/2015 - Creation of these classes                   -->
 #<!-- Review     : 09/04/2015 - Finalized                                   -->
 #<!--------------------------------------------------------------------------->
+from sympy.printing import dot
 
 __version__ = '$Revision: 2015040901 $'
 
@@ -20,8 +21,14 @@ __version__ = '$Revision: 2015040901 $'
 import cv2
 import numpy as np
 
-from Cameras.CameraEnum    import CameraEnum
-from Cameras.StereoCameras import StereoCameras
+from pylab import linalg
+
+import Configuration
+
+from Cameras.CameraEnum         import CameraEnum
+from Cameras.StereoCameras      import StereoCameras
+from Cameras.CamerasParameters  import CamerasParameters
+# from Processing.Configuration   import Configuration
 
 ########################################################################
 class Calibration(object):
@@ -68,6 +75,15 @@ class Calibration(object):
     def StereoCalibrate(self, leftCorners, rightCorners, objectPoints):
         """Calibrates the stereo camera."""
         # <009> Prepares the external parameters.
+        imagePointsLeft         = Configuration.Configuration.Instance.Pattern.LeftCorners
+        imagePointsRight        = Configuration.Configuration.Instance.Pattern.RightCorners
+        imageSize               = StereoCameras.Instance.Size
+
+        cameraMatrixLeft        = StereoCameras.Instance.Parameters.CameraMatrix1
+        cameraMatrixRight       = StereoCameras.Instance.Parameters.CameraMatrix2
+        distCoeffLeft           = StereoCameras.Instance.Parameters.DistCoeffs1
+        distCoeffRight          = StereoCameras.Instance.Parameters.DistCoeffs2
+
 
         # Defines the criterias used by stereoCalibrate() function.
         criteria = (cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, 100, 1e-5)
@@ -75,25 +91,47 @@ class Calibration(object):
         flags |= cv2.CALIB_RATIONAL_MODEL | cv2.CALIB_FIX_K3 | cv2.CALIB_FIX_K4 | cv2.CALIB_FIX_K5
 
         # <010> Calibrates a stereo camera setup.
+        retval, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, E, F = cv2.stereoCalibrate(objectPoints, imagePointsLeft, imagePointsRight, imageSize, cameraMatrixLeft, cameraMatrixRight, distCoeffLeft, distCoeffRight)
+
+        E2 = self.EssentialMatrix(R, T)
+        F2 = self.FundamentalMatrix(cameraMatrix1, cameraMatrix2, E2)
+
+
+        # TODO: Store other values?
 
         # <010> Records the external parameters.
+        StereoCameras.Instance.Parameters.CameraMatrix1 = cameraMatrix1
+        StereoCameras.Instance.Parameters.CameraMatrix2 = cameraMatrix2
+        StereoCameras.Instance.Parameters.DistCoeffs1 = distCoeffs1
+        StereoCameras.Instance.Parameters.DistCoeffs2 = distCoeffs2
 
         # <014> Return the final result.
+        return R, T
 
     def CrossProductMatrix(self, T):
         """Estimating the skew symmetric matrix."""
         # <011> Estimate the skew symmetric matrix
-        pass
+        sm = [
+            [0, -T[2], T[1]],
+            [T[2], 0, -T[0]],
+            [-T[1], T[0], 0]
+        ]
+        return sm
 
     def EssentialMatrix(self, R, T):
         """Calculate the Essential Matrix."""
         # <012> Estimate manually the essential matrix.
-        pass
+        sm = self.CrossProductMatrix(T)
+        E = sm * R
+        return E
 
     def FundamentalMatrix(self, K1, K2, E):
         """Calculate the Fundamental Matrix."""
         # <013> Estimate manually the fundamental matrix.
-        pass
+        K2_new = linalg.transpose(linalg.inv(K2))
+        K1_new = linalg.inv(K1)
+        F = K2_new * E * K1_new
+        return F
 
     def StereoRectify(self, R, T):
         """Computes rectification transforms for each head of a calibrated stereo camera."""

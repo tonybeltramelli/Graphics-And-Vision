@@ -21,15 +21,18 @@ __version__ = '$Revision: 2015040601 $'
 import cv2
 import sys
 import numpy as np
-from pylab import *
 
-from collections import deque
-from threading   import Thread
+from pylab                      import *
+from collections                import deque
+from threading                  import Thread
 
-from Cameras.CameraEnum       import CameraEnum
-from Cameras.StereoCameras    import StereoCameras
-from Processing.Configuration import Configuration
-from Cameras                  import CamerasParameters
+from Cameras.CameraEnum         import CameraEnum
+from Cameras.StereoCameras      import StereoCameras
+from Processing.Configuration   import Configuration
+from Cameras                    import CamerasParameters
+from Processing.Calibration     import Calibration
+from Processing.CalibrationEnum import CalibrationEnum
+
 
 ########################################################################
 class OpenCV3D(object):
@@ -348,7 +351,8 @@ end_header
                 F, mask = cv2.findFundamentalMat(x1, x2, cv2.cv.CV_FM_8POINT)
 
                 # <002> Save the Fundamental Matrix in the F attribute of the CamerasParameters class.
-                CamerasParameters.CamerasParameters.F = F
+                StereoCameras.Instance.Parameters.F = F
+                # CamerasParameters.CamerasParameters.F = F
 
                 # self.plotEpipolarLine(self.Image, F, [814, 148, 1])
 
@@ -371,10 +375,10 @@ end_header
 
                 e = self.computeEpipole(F)
 
-                print "-------- PRE"
-                print left
-
-                lp = array(None)
+                # print "-------- PRE"
+                # print left
+                #
+                # lp = array(None)
 
                 # for i in range(8):
                 #     lp.append(self.plotEpipolarLine(self.Image, F, left[i], e, True))
@@ -383,14 +387,14 @@ end_header
                 # lp.append([200, 250])
                 # lp.append([250, 10])
                 # lp.append([10, 99])
-                cv2.cv.ComputeCorrespondEpilines(left, self.Image, F, lp)
-
-                print "LINE_POINTS"
-                print lp
-
-                for i in range(len(lp)):
-                    if i > 0:
-                        cv2.line(self.Image, (int(lp[i-1][0]), int(lp[i-1][1])), (int(lp[i][0]), int(lp[i][1])), (255, 255, 0), 3)
+                # cv2.cv.ComputeCorrespondEpilines(left, self.Image, F, lp)
+                #
+                # print "LINE_POINTS"
+                # print lp
+                #
+                # for i in range(len(lp)):
+                #     if i > 0:
+                #         cv2.line(self.Image, (int(lp[i-1][0]), int(lp[i-1][1])), (int(lp[i][0]), int(lp[i][1])), (255, 255, 0), 3)
 
 
                 # Get each point from left image.
@@ -419,6 +423,10 @@ end_header
         objectPoints = Configuration.Instance.Pattern.CalculePattern()
 
         # <007> Insert the pattern detection results in three vectors.
+        Configuration.Instance.Pattern.LeftCorners.append(leftCorners)
+        Configuration.Instance.Pattern.RightCorners.append(rightCorners)
+        Configuration.Instance.Pattern.ObjectPoints.append(objectPoints)
+
 
         # Get the parameters used for calibrating each stereo camera.
         leftCorners  = Configuration.Instance.Pattern.LeftCorners
@@ -426,15 +434,25 @@ end_header
         objectPoints = Configuration.Instance.Pattern.ObjectPoints
 
         # <008> Finds the camera intrinsic and extrinsic parameters from several views of a calibration pattern.
+        calibration = Calibration()
+        cameraMatrixLeft, distCoeffsLeft = calibration.CalibrateCamera(leftCorners, objectPoints, CameraEnum.LEFT)
+        cameraMatrixRight, distCoeffsRight = calibration.CalibrateCamera(rightCorners, objectPoints, CameraEnum.RIGHT)
 
         # <008> Write the camera intrinsic and extrinsic parameters.
+        # camParam = CamerasParameters.CamerasParameters()
+        StereoCameras.Instance.Parameters.CameraMatrix1 = cameraMatrixLeft
+        StereoCameras.Instance.Parameters.CameraMatrix2 = cameraMatrixRight
+        StereoCameras.Instance.Parameters.DistCoeffs1 = distCoeffsLeft
+        StereoCameras.Instance.Parameters.DistCoeffs2 = distCoeffsRight
 
         # Calibrates the stereo camera.
         R, T = Configuration.Instance.Calibration.StereoCalibrate(leftCorners, rightCorners, objectPoints)
 
         # <015> Computes rectification transforms for each head of a calibrated stereo camera.
+        Configuration.Instance.Calibration.StereoRectify(R, T)
 
         # <016> Computes the undistortion and rectification transformation maps.
+        Configuration.Instance.Calibration.UndistortRectifyMap()
 
         # End the calibration process.
         self.IsCalibrating = False
@@ -456,16 +474,19 @@ end_header
         # <019> Computing a stereo correspondence using the block matching algorithm.
 
         # Check if it is necessary to save the PLY file.
-        if self.IsSaving:
-            self.__SavePLY(disparity, leftStereo)
+        # TODO: Uncomment
+        # if self.IsSaving:
+        #     self.__SavePLY(disparity, leftStereo)
 
         # <020> Normalizes the disparity image for a valid output OpenCV image.
 
         # Shows the disparity image.
-        cv2.imshow("DepthMap", disparity)
+        # TODO: Uncomment
+        # cv2.imshow("DepthMap", disparity)
 
         # Combine two stereo images in only one window.
-        stereo = self.__CombineImages(leftStereo, rightStereo, 0.5)
+        # stereo = self.__CombineImages(leftStereo, rightStereo, 0.5)
+        stereo = self.__CombineImages(leftImage, rightImage, 0.5)
         cv2.imshow("Stereo", stereo)
 
     def __Augmentation(self, corners, image, camera=CameraEnum.LEFT):

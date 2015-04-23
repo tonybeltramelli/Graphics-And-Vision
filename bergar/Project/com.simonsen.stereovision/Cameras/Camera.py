@@ -87,6 +87,10 @@ class Camera(object):
             vid = C.VIDEO_RIGHT_1
 
         # self.__camera = cv2.VideoCapture(index)
+        # vid = cv2.VideoCapture(vid)
+        # is_reading, img = vid.read()
+        # vid = cv2.pyrDown(img)
+        # self.__camera = vid
         self.__camera = cv2.VideoCapture(vid)
 
         # Save the index value in the "self.Index" property.

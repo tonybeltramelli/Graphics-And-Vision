@@ -16,6 +16,8 @@
 
 __version__ = '$Revision: 2015040701 $'
 
+from Settings.ClassProperty import ClassProperty
+
 ########################################################################
 class CamerasParameters(object):
     """CamerasParameters Class is used for managing the stereo cameras settings."""
