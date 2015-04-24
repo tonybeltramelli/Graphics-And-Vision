@@ -12,14 +12,47 @@ class FundamentalMatrix:
 
     is_ready = False
 
-    def __init__(self, img):
+    def get(self, img):
         self._img = img
         self._raw_img = copy(img)
 
         UMedia.show(self._img)
         cv2.setMouseCallback("image 0", self.mouse_event)
 
+        print "Hit the space key when 8 points are selected in each image"
         cv2.waitKey(0)
+
+        left = np.array(self._points[::2])
+        right = np.array(self._points[1::2])
+
+        fundamental_matrix = cv2.findFundamentalMat(left, right)
+
+        print fundamental_matrix[0]
+
+        fm = self.compute_fundamental(left, right)
+
+        print ("---")
+
+        print fm
+
+
+        return np.array(fundamental_matrix[0])
+
+    def compute_fundamental(self, x1,x2):
+        n = x1.shape[1]
+
+        A = zeros((n,9))
+
+        for i in range(n):
+            A[i] = [x1[0,i]*x2[0,i], x1[0,i]*x2[1,i], x1[0,i]*x2[2,i], x1[1,i]*x2[0,i],
+            x1[1,i]*x2[1,i], x1[1,i]*x2[2,i], x1[2,i]*x2[0,i], x1[2,i]*x2[1,i],
+            x1[2,i]*x2[2,i] ]
+        U,S,V = linalg.svd(A)
+        F = V[-1].reshape(3,3)
+        U,S,V = linalg.svd(F)
+        S[2] = 0
+        F = dot(U,dot(diag(S),V))
+        return F
 
     def mouse_event(self, event, x, y, flag, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -40,6 +73,7 @@ class FundamentalMatrix:
             self._points.append(point)
 
             if len(self._points) is self._MAX_POINT_NUMBER:
+                print "done"
                 self.is_ready = True
 
             UMedia.show(self._img)
