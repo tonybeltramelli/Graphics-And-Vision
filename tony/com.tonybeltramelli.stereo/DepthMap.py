@@ -16,7 +16,7 @@ class DepthMap:
 
         self.show_setting_window()
         self.update_disparity_map()
-        
+
         UInteractive.pause("pause")
 
     def update_disparity_map(self):
