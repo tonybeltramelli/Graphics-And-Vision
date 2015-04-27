@@ -51,7 +51,7 @@ class EpipolarGeometry:
 
         for height, row in zip(lines, points):
             x0, y0 = map(int, [0, -height[2]/height[1]])
-            x1, y1 = map(int, [width, -(height[2]+height[0]*width)/height[1]])
+            x1, y1 = map(int, [width/2, -(height[2]+height[0]*(width/2))/height[1]])
             cv2.line(img, (x0 + x_gap_line, y0), (x1 + x_gap_line, y1), color, 1)
             cv2.circle(img, (row[0] + x_gap_point, row[1]), 3, color)
 

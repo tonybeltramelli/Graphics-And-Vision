@@ -7,7 +7,7 @@ class StereoVision:
     _result = None
 
     def __init__(self, left_video_path, right_video_path):
-        self._result = self.get_stereo_images(UMedia.get_frame_from_video(left_video_path, 1), UMedia.get_frame_from_video(right_video_path, 1))
+        self._result = self.get_stereo_images(UMedia.get_frame_from_video(left_video_path, 15), UMedia.get_frame_from_video(right_video_path, 15))
 
         fm = EpipolarGeometry(self._result)
 
