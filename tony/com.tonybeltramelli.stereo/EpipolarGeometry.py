@@ -1,7 +1,7 @@
 __author__ = 'tbeltramelli'
 
-import cv2
-from UMedia import *
+from UInteractive import *
+
 
 class EpipolarGeometry:
     _points = []
@@ -21,8 +21,7 @@ class EpipolarGeometry:
         UMedia.show(self._img)
         cv2.setMouseCallback("image 0", self.mouse_event)
 
-        print "Hit the space key when 8 points are selected in each image"
-        cv2.waitKey(0)
+        UInteractive.pause("Hit the space key when 8 points are selected in each image")
 
         left = np.array(self._points[::2])
         right = np.array(self._points[1::2])
@@ -33,7 +32,8 @@ class EpipolarGeometry:
         self.build_epipolar_lines(right, fundamental_matrix, True)
 
         UMedia.show(self._raw_img)
-        cv2.waitKey(0)
+
+        UInteractive.pause("Hit the space key to continue")
 
     def build_epipolar_lines(self, points, fundamental_matrix, is_right, show_lines=True):
         lines = cv2.computeCorrespondEpilines(points, 2 if is_right else 1, fundamental_matrix)
@@ -50,9 +50,10 @@ class EpipolarGeometry:
         x_gap_line = 0 if is_right else width / 2
 
         for height, row in zip(lines, points):
-            x0, y0 = map(int, [0, -height[2]/height[1]])
-            x1, y1 = map(int, [width/2, -(height[2]+height[0]*(width/2))/height[1]])
-            cv2.line(img, (x0 + x_gap_line, y0), (x1 + x_gap_line, y1), color, 1)
+            x_start, y_start = map(int, [0, -height[2]/height[1]])
+            x_end, y_end = map(int, [width/2, -(height[2]+height[0]*(width/2))/height[1]])
+
+            cv2.line(img, (x_start + x_gap_line, y_start), (x_end + x_gap_line, y_end), color, 1)
             cv2.circle(img, (row[0] + x_gap_point, row[1]), 3, color)
 
         return img
