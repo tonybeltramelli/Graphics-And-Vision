@@ -27,73 +27,35 @@ class EpipolarGeometry:
         left = np.array(self._points[::2])
         right = np.array(self._points[1::2])
 
-        #self._fundamental_matrix = self.compute_fundamental_matrix(left, right)
-        #self._epipole = self.compute_epipole(self._fundamental_matrix)
+        fundamental_matrix, mask = cv2.findFundamentalMat(left, right)
 
-        #http://opencv-python-tutroals.readthedocs.org/en/latest/py_tutorials/py_calib3d/py_epipolar_geometry/py_epipolar_geometry.html
-
-        #point = [100, 100, 1]
-        #self.show_epipolar_lines(self._raw_img, point)
-
-        F, mask = cv2.findFundamentalMat(left, right)
-
-        lines1 = cv2.computeCorrespondEpilines(right.reshape(-1,1,2), 2,F)
-        lines1 = lines1.reshape(-1,3)
-        self.drawlines(self._raw_img,lines1,left,right)
-
-        height, width, layers = self._raw_img.shape
-
-        # Find epilines corresponding to points in left image (first image) and
-        # drawing its lines on right image
-        lines2 = cv2.computeCorrespondEpilines(left.reshape(-1,1,2), 1,F)
-        lines2 = lines2.reshape(-1,3)
-        self.drawlines(self._raw_img, lines2,right,left, width/2)
+        self.build_epipolar_lines(left, fundamental_matrix, False)
+        self.build_epipolar_lines(right, fundamental_matrix, True)
 
         UMedia.show(self._raw_img)
         cv2.waitKey(0)
 
-    def drawlines(self, img,lines,pts1,pts2, shift=0):
-        r,c,l = img.shape
-        for r,pt1,pt2 in zip(lines,pts1,pts2):
-            color = tuple(np.random.randint(0,255,3).tolist())
-            x0,y0 = map(int, [0, -r[2]/r[1] ])
-            x1,y1 = map(int, [c, -(r[2]+r[0]*c)/r[1] ])
-            cv2.line(img, (x0 + shift,y0), (x1 + shift,y1), color,1)
-            cv2.circle(img, (pt1[0] + shift, pt1[1]),5,color)
-            cv2.circle(img, (pt2[0] + shift, pt2[1]),5,color)
+    def build_epipolar_lines(self, points, fundamental_matrix, is_right, show_lines=True):
+        lines = cv2.computeCorrespondEpilines(points, 2 if is_right else 1, fundamental_matrix)
+        lines = lines.reshape(-1, 3)
+
+        if show_lines:
+            self.draw_lines(self._raw_img, lines, points, is_right)
+
+    def draw_lines(self, img, lines, points, is_right):
+        height, width, layers = img.shape
+
+        color = (0, 0, 255) if not is_right else (255, 0, 0)
+        x_gap_point = 0 if not is_right else width / 2
+        x_gap_line = 0 if is_right else width / 2
+
+        for height, row in zip(lines, points):
+            x0, y0 = map(int, [0, -height[2]/height[1]])
+            x1, y1 = map(int, [width, -(height[2]+height[0]*width)/height[1]])
+            cv2.line(img, (x0 + x_gap_line, y0), (x1 + x_gap_line, y1), color, 1)
+            cv2.circle(img, (row[0] + x_gap_point, row[1]), 3, color)
 
         return img
-
-
-    def compute_fundamental_matrix(self, x1, x2):
-        n = x1.shape[1]
-        a = zeros((n, 9))
-
-        for i in range(n):
-            a[i] = [x1[0, i] * x2[0, i], x1[0, i] * x2[1, i], x1[0, i] * x2[2, i],
-                    x1[1, i] * x2[0, i], x1[1, i] * x2[1, i], x1[1, i] * x2[2, i],
-                    x1[2, i] * x2[0, i], x1[2, i] * x2[1, i], x1[2, i] * x2[2, i]]
-
-        u, s, v = linalg.svd(a)
-        f = v[-1].reshape(3, 3)
-        u, s, v = linalg.svd(f)
-        s[2] = 0
-        f = dot(u, dot(diag(s), v))
-        return f
-
-    def compute_epipole(self, f):
-        u, s, v = linalg.svd(f)
-        e = v[-1]
-        return e/e[2]
-
-    def show_epipolar_lines(self, img, point):
-        m, n = img.shape[:2]
-        line = dot(self._fundamental_matrix, point)
-
-        t = linspace(0, n, 100)
-        lt = array([(line[2]+line[0]*tt)/(-line[1]) for tt in t])
-
-        print lt
 
     def mouse_event(self, event, x, y, flag, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -101,13 +63,10 @@ class EpipolarGeometry:
                 return
 
             height, width, layers = self._img.shape
-
             point = (x, y)
 
             color = (0, 0, 255) if len(self._points) % 2 == 0 else (255, 0, 0)
-
             cv2.circle(self._img, point, 3, color, thickness=-1)
-
             point = (point[0] - (0 if len(self._points) % 2 == 0 else width / 2), point[1])
 
             point = (point[0], point[1], 1)
