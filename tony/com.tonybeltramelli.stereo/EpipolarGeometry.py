@@ -16,24 +16,29 @@ class EpipolarGeometry:
 
     def __init__(self, img):
         self._img = img
-        self._raw_img = copy(img)
+        self._raw_img = copy(self._img)
 
+        left_points, right_points = self.get_manually_selected_features()
+
+        fundamental_matrix, mask = cv2.findFundamentalMat(left_points, right_points)
+
+        self.build_epipolar_lines(left_points, fundamental_matrix, False)
+        self.build_epipolar_lines(right_points, fundamental_matrix, True)
+
+        UMedia.show(self._raw_img)
+
+        UInteractive.pause("Hit the space key to continue")
+
+    def get_manually_selected_features(self):
         UMedia.show(self._img)
         cv2.setMouseCallback("image 0", self.mouse_event)
 
         UInteractive.pause("Hit the space key when 8 points are selected in each image")
 
-        left = np.array(self._points[::2])
-        right = np.array(self._points[1::2])
+        left_points = np.array(self._points[::2])
+        right_points = np.array(self._points[1::2])
 
-        fundamental_matrix, mask = cv2.findFundamentalMat(left, right)
-
-        self.build_epipolar_lines(left, fundamental_matrix, False)
-        self.build_epipolar_lines(right, fundamental_matrix, True)
-
-        UMedia.show(self._raw_img)
-
-        UInteractive.pause("Hit the space key to continue")
+        return left_points, right_points
 
     def build_epipolar_lines(self, points, fundamental_matrix, is_right, show_lines=True):
         lines = cv2.computeCorrespondEpilines(points, 2 if is_right else 1, fundamental_matrix)

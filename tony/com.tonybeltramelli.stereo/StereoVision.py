@@ -1,6 +1,7 @@
 __author__ = 'tbeltramelli'
 
 from EpipolarGeometry import *
+from DepthMap import *
 
 
 class StereoVision:
@@ -10,9 +11,8 @@ class StereoVision:
         left_img = UMedia.get_frame_from_video(left_video_path, 15)
         right_img = UMedia.get_frame_from_video(right_video_path, 15)
 
-        self._result = self.get_stereo_images(left_img, right_img)
-
-        eg = EpipolarGeometry(self._result)
+        #eg = EpipolarGeometry(self.get_stereo_images(left_img, right_img))
+        dp = DepthMap(left_img, right_img)
 
     def get_stereo_images(self, raw_left, raw_right):
         left = cv2.pyrDown(raw_left)
