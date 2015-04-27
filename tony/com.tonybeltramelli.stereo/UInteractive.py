@@ -31,3 +31,8 @@ class UInteractive:
         close(fig)
 
         return image_points
+
+    @staticmethod
+    def pause(message):
+        print message
+        cv2.waitKey(0)

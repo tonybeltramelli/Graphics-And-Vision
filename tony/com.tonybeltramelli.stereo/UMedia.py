@@ -49,6 +49,19 @@ class UMedia:
                     break
 
     @staticmethod
+    def get_frame_from_video(path, frame_number):
+        cap = cv2.VideoCapture(path)
+        frame_counter = 0
+        is_reading = True
+
+        while is_reading:
+            is_reading, img = cap.read()
+            frame_counter += 1
+
+            if frame_counter == frame_number:
+                return img
+
+    @staticmethod
     def load_media(path, callback):
         if ".jpg" in path or ".png" in path or ".bmp" in path:
             callback(UMedia.get_image(path))
@@ -82,7 +95,7 @@ class UMedia:
         show()
 
     @staticmethod
-    def combine_images(image1, image2, scale=1):
+    def combine_images(image1, image2, scale=1.0):
         height, width = image1.shape[:2]
         width = int(width * scale)
         height = int(height * scale)
