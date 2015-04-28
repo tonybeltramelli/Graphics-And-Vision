@@ -11,12 +11,14 @@
 #<!-- Information: No additional information                                -->
 #<!-- Date       : 09/04/2015                                               -->
 #<!-- Change     : 09/04/2015 - Creation of these classes                   -->
+#<!--            : 18/04/2015 - Add the augmented object                    -->
 #<!-- Review     : 09/04/2015 - Finalized                                   -->
 #<!--------------------------------------------------------------------------->
 
-__version__ = '$Revision: 2015040901 $'
+__version__ = '$Revision: 2015041801 $'
 
 ########################################################################
+from Augmented       import Augmented
 from Calibration     import Calibration
 from CalibrationEnum import CalibrationEnum
 from Image           import Image
@@ -29,6 +31,11 @@ class Config(object):
     #----------------------------------------------------------------------#
     #                           Class Properties                           #
     #----------------------------------------------------------------------#
+    @property
+    def Augmented(self):
+        """Get the augmente object for performin the augmented reality process."""
+        return self.__augmented
+
     @property
     def Calibration(self):
         """Get the calibration object for performing the stereo cameras calibration process."""
@@ -49,6 +56,7 @@ class Config(object):
     #----------------------------------------------------------------------#
     def __init__(self):
         """Configuration Class Constructor."""
+        self.__augmented   = Augmented()
         self.__calibration = Calibration()
         self.__image       = Image()
         self.__pattern     = Pattern(CalibrationEnum.CHESSBOARD)

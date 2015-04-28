@@ -32,7 +32,7 @@ from Processing.Configuration   import Configuration
 from Cameras                    import CamerasParameters
 from Processing.Calibration     import Calibration
 from Processing.CalibrationEnum import CalibrationEnum
-
+from Processing.Augmented       import Augmented
 
 ########################################################################
 class OpenCV3D(object):
@@ -145,7 +145,7 @@ end_header
 
     def Clear(self):
         """Empty all internal parameters used for this class."""
-        self.hasFundamentalMatrix = self.IsCalibrating = self.IsSaving = self.IsFrozen = False
+        self.hasFundamentalMatrix = self.IsCalibrating = self.IsSaving = self.IsFrozen = self.IsDrawing = False
         self.PointsQueue   = deque(maxlen=16)
 
     #----------------------------------------------------------------------#
@@ -177,8 +177,8 @@ end_header
                 leftImage, rightImage = StereoCameras.Instance.Retrieve()
 
                 # Find the pattern in the image.
-                leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage)
-                rightCorners = Configuration.Instance.Pattern.FindCorners(rightImage)
+                leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage,  not self.IsDrawing)
+                rightCorners = Configuration.Instance.Pattern.FindCorners(rightImage, not self.IsDrawing)
 
                 # Check if the calibration process is running.
                 if self.IsCalibrating:
@@ -191,12 +191,19 @@ end_header
 
                 # Check if the system is calibrated.
                 elif Configuration.Instance.Calibration.IsCalibrated:
-                    # Estimate the depth map from two stereo images.
-                    self.__DepthMap(leftImage, rightImage)
+                    # Check if the system is drawing some object.
+                    if self.IsDrawing:
+                        # If both pattern have been recognized, start the calibration process.
+                        if leftCorners is not None and rightCorners is not None:
+                            self.__Augmentation(leftCorners,  leftImage)
+                            # self.__Augmentation(rightCorners, rightImage, True)
+                            # TODO: Uncomment or delete
+                    # Otherwise, estimates the depth map from two stereo images.
+                    else:
+                        self.__DepthMap(leftImage, rightImage)
 
                 # Combine two stereo images in only one window.
                 self.Image = self.__CombineImages(leftImage, rightImage, 0.5)
-                # self.Image = self.__CombineImages(leftImage, rightImage, 1.0) # TODO: Change back
                 cv2.imshow("Original", self.Image)
 
             # Check what the user wants to do.
@@ -213,9 +220,62 @@ end_header
             # Letter "f" key.
             elif inputKey == ord("f"):
                 self.IsFrozen = not self.IsFrozen
+            # Letter "d" key.
+            elif inputKey == ord("d"):
+                self.IsDrawing = not self.IsDrawing
 
         # Closes all video capturing devices.
         StereoCameras.Instance.Release()
+        # while True:
+        #
+        #     # Check if the fundamental matrix process is running.
+        #     if not self.IsFrozen:
+        #
+        #         # Grabs the next frame from capturing device.
+        #         StereoCameras.Instance.Grab()
+        #         # Decodes and returns the grabbed video frames.
+        #         leftImage, rightImage = StereoCameras.Instance.Retrieve()
+        #
+        #         # Find the pattern in the image.
+        #         leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage)
+        #         rightCorners = Configuration.Instance.Pattern.FindCorners(rightImage)
+        #
+        #         # Check if the calibration process is running.
+        #         if self.IsCalibrating:
+        #             # If both pattern have been recognized, start the calibration process.
+        #             if leftCorners is not None and rightCorners is not None:
+        #                 self.__Calibrate(leftCorners, rightCorners)
+        #             # Otherwise, stop the calibrations process.
+        #             else:
+        #                 self.IsCalibrating = False
+        #
+        #         # Check if the system is calibrated.
+        #         elif Configuration.Instance.Calibration.IsCalibrated:
+        #             # Estimate the depth map from two stereo images.
+        #             self.__DepthMap(leftImage, rightImage)
+        #
+        #         # Combine two stereo images in only one window.
+        #         self.Image = self.__CombineImages(leftImage, rightImage, 0.5)
+        #         # self.Image = self.__CombineImages(leftImage, rightImage, 1.0) # TODO: Change back
+        #         cv2.imshow("Original", self.Image)
+        #
+        #     # Check what the user wants to do.
+        #     inputKey = cv2.waitKey(1)
+        #     # Esc or letter "q" key.
+        #     if inputKey == 27 or inputKey == ord("q"):
+        #         break
+        #     # Space key.
+        #     elif inputKey == 32:
+        #         self.IsCalibrating = True
+        #     # Letter "s" key.
+        #     elif inputKey == ord("s"):
+        #         self.IsSaving = True
+        #     # Letter "f" key.
+        #     elif inputKey == ord("f"):
+        #         self.IsFrozen = not self.IsFrozen
+        #
+        # # Closes all video capturing devices.
+        # StereoCameras.Instance.Release()
         # Close all OpenCV windows.
         cv2.destroyAllWindows()
 
@@ -420,7 +480,7 @@ end_header
     def __Calibrate(self, leftCorners, rightCorners):
         """Calibrate the stereo camera for each new detected pattern."""
         # Get The outer vector contains as many elements as the number of the pattern views.
-        objectPoints = Configuration.Instance.Pattern.CalculePattern()
+        objectPoints = Configuration.Instance.Pattern.CalculatePattern()
 
         # <007> Insert the pattern detection results in three vectors.
         Configuration.Instance.Pattern.LeftCorners.append(leftCorners)
@@ -495,20 +555,83 @@ end_header
         objectPoints = Configuration.Instance.Pattern.CalculatePattern()
 
         # <021> Prepares the external parameters.
+        cameraMatrix = StereoCameras.Instance.Parameters.CameraMatrix2
+        distCoeffs = StereoCameras.Instance.Parameters.DistCoeffs2
 
         # <022> Get the points of the coordinate system.
+        points = Configuration.Instance.Augmented.CoordinateSystem
+
 
         # Defines the pose estimation of the coordinate system.
         points = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, points, cameraMatrix, distCoeffs)
 
         # <025> Draws the coordinate system over the chessboard pattern.
+        # print "----------------------------"
+        # print "Points:"
+        # print points.shape
+        # print points
+        # print "----------------------------"
+
+        # r = points[0]
+        # p = r[0]
+        # x = int(p[0])
+        # y = int(p[1])
+        # print x
+        # print y
+        # cv2.circle(image, (x, y), 10, (255, 0, 0), 3)
+        # cv2.imshow("lines", image)
+
+        r = points[0]
+        s = r[0]
+        x = int(s[0])
+        y = int(s[1])
+        cv2.circle(image, (x, y), 10, (255, 0, 0), 3)
+
+        # tmpx = 0
+        # tmpy = 0
+        # for i in range(points.shape[0]):
+        #     for p in points[i]:
+        #         x = int(p[0])
+        #         y = int(p[1])
+        #         cv2.circle(image, (x, y), 10, (255, 0, 0), 3)
+                # if (tmpx != 0) and (tmpy != 0):
+                #     cv2.line(image, (tmpx, tmpy), (x, y), (255, 255, 0), 3)
+                #     print "line (%d, %d) - (%d, %d)" % (tmpx, tmpy, x, y)
+                # tmpx = x
+                # tmpy = y
+        # cv2.imshow("lines", image)
+                # print "------------------"
+                # print p[0]
+                # print "------------------"
+                # print p[1]
+                # print "------------------"
+
 
         # <026> Get the points of the cube.
+        cube = Configuration.Instance.Augmented.Cube
 
         # <027> Defines the pose estimation of the cube.
+        cube = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, cube, cameraMatrix, distCoeffs)
 
         # <028> Draws ground floor in green color.
         # SIGB: Uses the last four points to do this.
+        x1 = cube[50][0][0]
+        y1 = cube[50][0][1]
+        x2 = cube[51][0][0]
+        y2 = cube[51][0][1]
+        x3 = cube[52][0][0]
+        y3 = cube[52][0][1]
+        x4 = cube[53][0][0]
+        y4 = cube[53][0][1]
+        cv2.line(image, (int(x1), int(y1)), (int(x2), int(y2)), (255,0,255), 2)
+        cv2.line(image, (int(x2), int(y2)), (int(x3), int(y3)), (255,0,255), 2)
+        cv2.line(image, (int(x4), int(y4)), (int(x4), int(y4)), (255,0,255), 2)
+        cv2.line(image, (int(x4), int(y4)), (int(x1), int(y1)), (255,0,255), 2)
+
+        # cv2.imshow("lines", image)
+        # print x
+        # print y
+        # print "11111111111111111111111111"
 
         # <029> Draw pillars in blue color.
         # SIGB: Uses the intersections between the first four points and the last four points.

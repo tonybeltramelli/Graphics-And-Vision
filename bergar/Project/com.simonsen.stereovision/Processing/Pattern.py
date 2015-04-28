@@ -145,7 +145,7 @@ class Pattern(object):
         # Return the final result.
         return corners
 
-    def CalculePattern(self):
+    def CalculatePattern(self):
         """Creates a standard vectors of the calibration pattern points."""
         # Check what kind of pattern the user will use during the camera calibration process.
         self.__size = (11, 4) if self.Type == CalibrationEnum.CIRCLES else (9, 6)

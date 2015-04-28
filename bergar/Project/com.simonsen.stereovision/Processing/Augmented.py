@@ -52,16 +52,20 @@ class Augmented(object):
     def PoseEstimation(self, objectPoints, corners, points, cameraMatrix, distCoeffs):
         """Define the pose estimation of the calibration pattern."""
         # <023> Find the rotation and translation vectors.
+        # Reshape object points for solvePnP function
+        objectPoints = objectPoints.reshape(objectPoints.shape + (1,))
+
+        retval, rvec, tvec = cv2.solvePnP(objectPoints, corners, cameraMatrix, distCoeffs)
 
         # Save the rotation and translation matrices as private attributes.
-        # self.__rotation    = cv2.Rodrigues(rvec)[0]
-        # self.__translation = tvec
+        self.__rotation    = cv2.Rodrigues(rvec)[0]
+        self.__translation = tvec
 
         # <024> Project 3D points to image plane.
+        imagePoints, jacobian = cv2.projectPoints(objectPoints, rvec, tvec, cameraMatrix, distCoeffs, points)
 
         # Return the final result.
-        # return imagePoints
-        # TODO: FINISH
+        return imagePoints
 
     def ApplyTexture(self, image, filename, points):
         """Applies a texture mapping over an augmented virtual object."""
