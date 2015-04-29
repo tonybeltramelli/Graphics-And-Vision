@@ -4,11 +4,14 @@ import numpy as np
 import math
 from pylab import *
 
-class UMath:
+
+class UMath(object):
 
     @staticmethod
     def normalize(range_min, range_max, x, x_min, x_max):
-        return range_min + (((x - x_min) * (range_max - range_min)) / (x_max - x_min))
+        d = x_max - x_min
+        d = d if d > 0 else 1
+        return range_min + (((x - x_min) * (range_max - range_min)) / d)
 
     @staticmethod
     def is_in_area(x, y, width, height):

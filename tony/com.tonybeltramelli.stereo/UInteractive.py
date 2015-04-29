@@ -3,7 +3,7 @@ __author__ = 'tbeltramelli'
 from UMedia import *
 
 
-class UInteractive:
+class UInteractive(object):
 
     @staticmethod
     def select_points_in_images(images, n=4):
@@ -33,6 +33,6 @@ class UInteractive:
         return image_points
 
     @staticmethod
-    def pause(message):
-        print message
+    def pause(message=""):
+        print message + (", h" if len(message) != 0 else "H") + "it space to continue"
         cv2.waitKey(0)

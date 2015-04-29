@@ -4,7 +4,7 @@ import cv2
 from pylab import *
 
 
-class UMedia:
+class UMedia(object):
 
     @staticmethod
     def get_image(path):
@@ -93,18 +93,3 @@ class UMedia:
             title(("image %d" % i))
             imshow(img)
         show()
-
-    @staticmethod
-    def combine_images(image1, image2, scale=1.0):
-        height, width = image1.shape[:2]
-        width = int(width * scale)
-        height = int(height * scale)
-
-        image1 = cv2.resize(image1, (width, height))
-        image2 = cv2.resize(image2, (width, height))
-
-        image = np.zeros((height, width * 2, 3), dtype=np.uint8)
-        image[:height, :width] = image1
-        image[:height, width:width * 2] = image2
-
-        return image

@@ -2,4 +2,4 @@ __author__ = 'tbeltramelli'
 
 from StereoVision import *
 
-st = StereoVision("../media/cameraLeft.mov", "../media/cameraRight.mov")
+st = StereoVision("../data/media/cameraLeft.mov", "../data/media/cameraRight.mov", "../data/output")

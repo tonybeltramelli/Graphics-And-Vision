@@ -27,13 +27,13 @@ class EpipolarGeometry:
 
         UMedia.show(self._raw_img)
 
-        UInteractive.pause("Hit the space key to continue")
+        UInteractive.pause()
 
     def get_manually_selected_features(self):
         UMedia.show(self._img)
         cv2.setMouseCallback("image 0", self.mouse_event)
 
-        UInteractive.pause("Hit the space key when 8 points are selected in each image")
+        UInteractive.pause("Select 8 points in each image")
 
         left_points = np.array(self._points[::2])
         right_points = np.array(self._points[1::2])
