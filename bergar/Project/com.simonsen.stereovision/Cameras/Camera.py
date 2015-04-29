@@ -82,9 +82,9 @@ class Camera(object):
 
         # load video
         if index < 2:
-            vid = C.VIDEO_LEFT_1
+            vid = C.VIDEO_LEFT_3
         else:
-            vid = C.VIDEO_RIGHT_1
+            vid = C.VIDEO_RIGHT_3
 
         # self.__camera = cv2.VideoCapture(index)
         # vid = cv2.VideoCapture(vid)

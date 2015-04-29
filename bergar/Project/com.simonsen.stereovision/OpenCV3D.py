@@ -182,12 +182,14 @@ end_header
 
                 # Check if the calibration process is running.
                 if self.IsCalibrating:
+                    print "Start calibration"
                     # If both pattern have been recognized, start the calibration process.
                     if leftCorners is not None and rightCorners is not None:
                         self.__Calibrate(leftCorners, rightCorners)
                     # Otherwise, stop the calibrations process.
                     else:
                         self.IsCalibrating = False
+                    print "Done Calibrating"
 
                 # Check if the system is calibrated.
                 elif Configuration.Instance.Calibration.IsCalibrated:
