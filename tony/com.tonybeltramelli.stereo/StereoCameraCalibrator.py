@@ -67,12 +67,13 @@ class StereoCameraCalibrator:
                 UMedia.show(UGraphics.get_stereo_image(left_img, right_img))
                 UInteractive.pause("Chessboard detected")
 
-            self._left_points.append(left_coordinates.reshape(-1, 2))
-            self._right_points.append(right_coordinates.reshape(-1, 2))
+            self._left_points.append(left_coordinates)
+            self._right_points.append(right_coordinates)
             self._object_points.append(self._pattern_points)
 
             self._n -= 1
             if self._n == 0:
+                criteria = (cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, 100, 1e-5)
                 flags = cv2.CALIB_FIX_ASPECT_RATIO | cv2.CALIB_ZERO_TANGENT_DIST | cv2.CALIB_SAME_FOCAL_LENGTH
                 flags |= cv2.CALIB_RATIONAL_MODEL | cv2.CALIB_FIX_K3 | cv2.CALIB_FIX_K4 | cv2.CALIB_FIX_K5
 
@@ -83,7 +84,7 @@ class StereoCameraCalibrator:
                                                 self.left_distortion_coefficient,
                                                 self.right_camera_matrix,
                                                 self.right_distortion_coefficient,
-                                                (self._width, self._height), flags=flags)
+                                                (self._width, self._height), criteria=criteria, flags=flags)
 
                 reprojection_error_value = calibrate[0]
                 self.left_camera_matrix = calibrate[1]
@@ -164,7 +165,7 @@ class StereoCameraCalibrator:
         self.complete_calibration()
 
     def complete_calibration(self):
-        self.rectify(self.rotation_matrix, self.translation_vector)
+        #self.rectify(self.rotation_matrix, self.translation_vector)
         self.is_calibrated = True
 
 
