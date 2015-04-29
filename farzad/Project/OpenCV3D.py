@@ -185,7 +185,7 @@ end_header
                     self.__DepthMap(leftImage, rightImage)
 
                 # Combine two stereo images in only one window.
-                self.Image = self.__CombineImages(leftImage, rightImage, 0.5)
+                self.Image = self.__CombineImages(leftImage, rightImage, 1)
                 cv2.imshow("Original", self.Image)
 
             # Check what the user wants to do.
@@ -220,24 +220,50 @@ end_header
                 points = np.asarray(self.PointsQueue, dtype=np.float32)
 
                 # <000> Get the selected points from the left and right images.
+                pointsLeft,pointsRight=[],[]
+                
+                for i in xrange(0,16):
+                    if i % 2 ==0:
+                        pointLeft=points[i]
+                        pointsLeft.append(pointLeft)
+                
+                    elif i % 2 ==1:
+                        pointRight=points[i]
+                        pointsRight.append(pointRight) 
+                        
+                pointsLeft=np.array(pointsLeft, dtype=np.float32) 
+                pointsRight=np.array(pointsRight, dtype=np.float32)       
 
                 # <001> Estimate the Fundamental Matrix.
+                FundMat,mask1=cv2.findFundamentalMat(pointsLeft,pointsRight)
 
                 # <002> Save the Fudamental Matrix in the F attribute of the CamerasParameters class.
+                StereoCameras.Instance.Parameters.F=FundMat
 
                 # Get each point from left image.
-                # for point in left:
-
+                for pt in pointsLeft:
+                    
                     # <003> Estimate the epipolar line.
+                   
+                    lineEpi=cv2.computeCorrespondEpilines(np.array([pt]), 1, StereoCameras.Instance.Parameters.F)
 
-                    # <004> Define the initial and final points of the line.
-                
+                    # <004> Define the initial and final points of the line.  
+                    initialP=(1280+(int(-lineEpi[0,0,2]/lineEpi[0,0,0])),0)
+                    FinalP=(1280,int(-lineEpi[0,0,2]/lineEpi[0,0,1]))                    
+                    
                     # <005> Draws the epipolar line in the input image.
+                    cv2.line(self.Image, initialP, FinalP, (255,0,0))
+
 
                 # Get each point from right image.
-                # for point in right:
+                for pt in pointsRight:
 
                     # <006> Estimate the epipolar line.
+                    lineEpi=cv2.computeCorrespondEpilines(np.array([pt]), 2, StereoCameras.Instance.Parameters.F)
+                    initialP=(int(-lineEpi[0,0,2]/lineEpi[0,0,0]),0)
+                    FinalP=(0,int(-lineEpi[0,0,2]/lineEpi[0,0,1]))
+                    cv2.line(self.Image, initialP, FinalP, (0,0,255))
+                    
 
                 # Show the final result of this process to the user.
                 cv2.imshow("Original", self.Image)
@@ -297,7 +323,7 @@ end_header
         cv2.imshow("DepthMap", disparity)
 
         # Combine two stereo images in only one window.
-        stereo = self.__CombineImages(leftStereo, rightStereo, 0.5)
+        stereo = self.__CombineImages(leftStereo, rightStereo, 1)
         cv2.imshow("Stereo", stereo)
 
     def __SavePLY(self, disparity, image):
@@ -382,11 +408,11 @@ end_header
 
         # Adjust the right click to correct position.
         if size % 2 != 0:
-            point = (point[0] - 320, point[1])
+            point = (point[0] - 1280, point[1])
 
         # It is necessary to update the selected point, because the systems shows a resized input image.
         # SIBG: You can use the original size, if you call __CombineImages() method with scale factor value 1.0.
-        point = (point[0] * 2, point[1] * 2, 1)
+        point = (point[0], point[1], 1)
 
         # Insert the new point in the queue.
         self.PointsQueue.append(point)
