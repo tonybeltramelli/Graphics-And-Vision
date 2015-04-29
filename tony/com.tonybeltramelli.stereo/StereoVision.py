@@ -16,7 +16,7 @@ class StereoVision:
         #right_img = cv2.pyrDown(UMedia.get_frame_from_video(right_video_path, 15))
         #eg = EpipolarGeometry(UGraphics.get_combined_image(left_img, right_img))
 
-        self._calibrator = StereoCameraCalibrator(output_path)
+        self._calibrator = StereoCameraCalibrator(output_path, 10)
         self._depth = DepthMap(output_path)
 
         UMedia.load_videos([left_video_path, right_video_path], self.process)
@@ -36,4 +36,4 @@ class StereoVision:
             #self._depth.save_point_cloud(disparity_map, self._calibrator.disparity_to_depth_matrix)
 
         else:
-            self._calibrator.calibrate(images[0], images[1], True)
+            self._calibrator.calibrate(images[0], images[1], True, False)
