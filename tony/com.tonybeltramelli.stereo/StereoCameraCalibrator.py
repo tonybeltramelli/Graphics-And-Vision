@@ -58,8 +58,8 @@ class StereoCameraCalibrator:
 
                 #UMedia.show(UGraphics.get_combined_image(left_img, right_img))
 
-            self._left_points.append(left_coordinates)
-            self._right_points.append(right_coordinates)
+            self._left_points.append(left_coordinates.reshape(-1, 2))
+            self._right_points.append(right_coordinates.reshape(-1, 2))
             self._object_points.append(self._pattern_points)
 
             self.stereo_calibrate()
