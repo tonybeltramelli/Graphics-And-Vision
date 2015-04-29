@@ -13,37 +13,15 @@ class StereoVision:
     _calibrator = None
     _depth = None
 
-    _i = 0
-    #25 37 74 80 94 101 113 130
-
     def __init__(self, left_video_path, right_video_path, output_path):
         #left_img = cv2.pyrDown(UMedia.get_frame_from_video(left_video_path, 15))
         #right_img = cv2.pyrDown(UMedia.get_frame_from_video(right_video_path, 15))
         #eg = EpipolarGeometry(UGraphics.get_combined_image(left_img, right_img))
 
-        #self._calibrator = StereoCameraCalibrator(output_path)
+        self._calibrator = StereoCameraCalibrator(output_path)
         #self._depth = DepthMap(output_path)
 
         #UMedia.load_videos([left_video_path, right_video_path], self.process)
-
-        self.see(left_video_path, right_video_path, output_path, 25)
-        self.see(left_video_path, right_video_path, output_path, 37)
-        self.see(left_video_path, right_video_path, output_path, 74)
-        self.see(left_video_path, right_video_path, output_path, 80)
-        self.see(left_video_path, right_video_path, output_path, 94)
-        self.see(left_video_path, right_video_path, output_path, 101)
-        self.see(left_video_path, right_video_path, output_path, 113)
-        self.see(left_video_path, right_video_path, output_path, 130)
-
-
-    def see(self, left_video_path, right_video_path, output_path, i):
-        l1 = UMedia.get_frame_from_video(left_video_path, i)
-        r1 = UMedia.get_frame_from_video(right_video_path, i)
-        UMedia.show(UGraphics.get_combined_image(cv2.pyrDown(l1), cv2.pyrDown(r1)))
-        UInteractive.pause(str(i))
-
-        cv2.imwrite(output_path + "/l" + str(i) + ".jpg", l1)
-        cv2.imwrite(output_path + "/r" + str(i) + ".jpg", r1)
 
     def process(self, images):
         #self._calibrator.calibrate(images[0], images[1], True)

@@ -3,6 +3,7 @@ from pylab import *
 from UInteractive import *
 from UGraphics import *
 
+
 class StereoCameraCalibrator:
     is_calibrated = False
 
