@@ -23,7 +23,6 @@ from collections import deque
 
 from Cameras.StereoCameras    import StereoCameras
 from Processing.Configuration import Configuration
-from assignment3.tony.project.UMedia import *
 
 ########################################################################
 class OpenCV3D(object):

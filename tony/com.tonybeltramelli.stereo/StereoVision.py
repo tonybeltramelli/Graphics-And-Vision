@@ -25,7 +25,7 @@ class StereoVision:
         epipole = EpipolarGeometry(UGraphics.get_combined_image(left_img, right_img))
 
     def stereo_vision(self, left_video_path, right_video_path, calibration_images=None):
-        self._calibrator = StereoCameraCalibrator(10)
+        self._calibrator = StereoCameraCalibrator(1)
         self._depth = DepthMap(self.output_path)
 
         if calibration_images is None:
@@ -51,13 +51,14 @@ class StereoVision:
 
         if self._calibrator.is_calibrated:
             left_img, right_img = self._calibrator.get_undistorted_rectified_images(images[0], images[1])
-            #disparity_map = self._depth.get(left_img, right_img)
+            disparity_map = self._depth.get(images[0], images[1])
 
             original_img = UGraphics.get_combined_image(images[0], images[1], 0.5)
             rectified_img = UGraphics.get_combined_image(left_img, right_img, 0.5)
 
-            UMedia.show(UGraphics.get_combined_image(original_img, rectified_img, use_horizontally=False))
+            self._depth.save_point_cloud(disparity_map, self._calibrator.disparity_to_depth_matrix)
 
-            #self._depth.save_point_cloud(disparity_map, self._calibrator.disparity_to_depth_matrix)
+            UMedia.show(UGraphics.get_combined_image(original_img, rectified_img, use_horizontally=False), disparity_map)
+            UInteractive.pause()
         else:
             self._calibrator.calibrate(images[0], images[1], True)

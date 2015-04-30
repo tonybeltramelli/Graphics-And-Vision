@@ -51,18 +51,28 @@ class DepthMap:
         mask = disparity > disparity.min()
         points = points[mask].reshape(-1, 3)
 
+        points = map(self.get_color, points)
+
         with open(self._output_path + "/point_cloud.ply", "w") as filename:
             ply_header = '''ply
-            format ascii 1.0
-            element vertex %(num)d
-            property float x
-            property float y
-            property float z
-            end_header
-            '''
-
+format ascii 1.0
+element vertex %(num)d
+property float x
+property float y
+property float z
+property int r
+property int g
+property int b
+end_header
+'''
             filename.write(ply_header % dict(num=len(points)))
-            np.savetxt(filename, points, "%f %f %f", newline="\n")
+            np.savetxt(filename, points, "%f %f %f %i %i %i", newline="\n")
+
+    def get_color(self, p):
+        r = 100
+        g = 100
+        b = 100
+        return [p[0], p[1], p[2], r, g, b]
 
     def show_setting_window(self):
         cv2.namedWindow("DepthMap", cv2.WINDOW_AUTOSIZE)
@@ -72,9 +82,7 @@ class DepthMap:
     def update_min_disparity(self, value):
         if value % 16 == 0:
             self._min_disparity = value
-            self.update_disparity_map()
 
     def update_block_size(self, value):
         if value % 2 != 0:
             self._block_size = value
-            self.update_disparity_map()
