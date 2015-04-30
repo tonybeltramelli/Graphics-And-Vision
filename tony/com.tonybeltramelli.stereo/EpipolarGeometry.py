@@ -14,19 +14,22 @@ class EpipolarGeometry:
 
     is_ready = False
 
-    def __init__(self, img):
+    def __init__(self, img, define_manually=True):
         self._img = img
         self._raw_img = copy(self._img)
 
-        left_points, right_points = self.get_manually_selected_features()
+        if define_manually:
+            left_points, right_points = self.get_manually_selected_features()
 
-        fundamental_matrix, mask = cv2.findFundamentalMat(left_points, right_points)
+            fundamental_matrix, mask = cv2.findFundamentalMat(left_points, right_points)
 
+            self.show_lines(left_points, right_points, fundamental_matrix)
+
+    def show_lines(self, left_points, right_points, fundamental_matrix):
         self.build_epipolar_lines(left_points, fundamental_matrix, False)
         self.build_epipolar_lines(right_points, fundamental_matrix, True)
 
         UMedia.show(self._raw_img)
-
         UInteractive.pause()
 
     def get_manually_selected_features(self):
@@ -57,6 +60,7 @@ class EpipolarGeometry:
         for height, row in zip(lines, points):
             x_start, y_start = map(int, [0, -height[2]/height[1]])
             x_end, y_end = map(int, [width/2, -(height[2]+height[0]*(width/2))/height[1]])
+            row = map(int, row)
 
             cv2.line(img, (x_start + x_gap_line, y_start), (x_end + x_gap_line, y_end), color, 1)
             cv2.circle(img, (row[0] + x_gap_point, row[1]), 3, color)

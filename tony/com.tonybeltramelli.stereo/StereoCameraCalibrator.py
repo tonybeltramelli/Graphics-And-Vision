@@ -1,5 +1,3 @@
-import cv2
-from pylab import *
 from UInteractive import *
 from UGraphics import *
 
@@ -12,8 +10,8 @@ class StereoCameraCalibrator:
     _pattern_points = None
 
     _object_points = None
-    _left_points = None
-    _right_points = None
+    left_points = None
+    right_points = None
     _width = None
     _height = None
 
@@ -23,6 +21,7 @@ class StereoCameraCalibrator:
     right_distortion_coefficient = None
     rotation_matrix = None
     translation_vector = None
+    fundamental_matrix = None
 
     left_rectification_transform = None
     right_rectification_transform = None
@@ -43,8 +42,8 @@ class StereoCameraCalibrator:
         self._pattern_points[:, :2] = np.indices(pattern_size).T.reshape(-1, 2)
 
         self._object_points = []
-        self._left_points = []
-        self._right_points = []
+        self.left_points = []
+        self.right_points = []
 
     def calibrate(self, left_img, right_img, to_draw=False):
         self._height, self._width, layers = left_img.shape
@@ -52,15 +51,18 @@ class StereoCameraCalibrator:
         left_is_found, left_coordinates = cv2.findChessboardCorners(left_img, self._pattern_size, cv2.CALIB_CB_FAST_CHECK)
         right_is_found, right_coordinates = cv2.findChessboardCorners(right_img, self._pattern_size, cv2.CALIB_CB_FAST_CHECK)
 
-        if (left_is_found and right_is_found) and (self._n > 0):
+        is_detected = left_is_found and right_is_found
+
+        if is_detected and (self._n > 0):
             if to_draw:
                 cv2.drawChessboardCorners(left_img, self._pattern_size, left_coordinates, left_is_found)
                 cv2.drawChessboardCorners(right_img, self._pattern_size, right_coordinates, right_is_found)
 
-                #UMedia.show(UGraphics.get_combined_image(left_img, right_img))
-
-            self._left_points.append(left_coordinates.reshape(-1, 2))
-            self._right_points.append(right_coordinates.reshape(-1, 2))
+                UMedia.show(UGraphics.get_combined_image(left_img, right_img))
+                UInteractive.pause()
+                
+            self.left_points.append(left_coordinates.reshape(-1, 2))
+            self.right_points.append(right_coordinates.reshape(-1, 2))
             self._object_points.append(self._pattern_points)
 
             self.stereo_calibrate()
@@ -69,24 +71,10 @@ class StereoCameraCalibrator:
 
             self._n -= 1
 
-            #------------
-
-            print self._n
-
-            original_img = UGraphics.get_combined_image(left_img, right_img, 0.5)
-            left_img, right_img = self.get_undistorted_rectified_images(left_img, right_img)
-            rectified_img = UGraphics.get_combined_image(left_img, right_img, 0.5)
-
-            UMedia.show(UGraphics.get_combined_image(original_img, rectified_img, use_horizontally=False))
-            UInteractive.pause("pause")
-
-            #------------
-
             if self._n == 0:
-                print "done"
                 self.is_calibrated = True
 
-                cv2.destroyAllWindows()
+        return is_detected
 
     def stereo_calibrate(self):
         criteria = (cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, 100, 1e-5)
@@ -94,8 +82,8 @@ class StereoCameraCalibrator:
         flags |= cv2.CALIB_RATIONAL_MODEL | cv2.CALIB_FIX_K3 | cv2.CALIB_FIX_K4 | cv2.CALIB_FIX_K5
 
         calibrate = cv2.stereoCalibrate(self._object_points,
-                                        self._left_points,
-                                        self._right_points,
+                                        self.left_points,
+                                        self.right_points,
                                         self.left_camera_matrix,
                                         self.left_distortion_coefficient,
                                         self.right_camera_matrix,
@@ -110,7 +98,7 @@ class StereoCameraCalibrator:
         self.rotation_matrix = calibrate[5]
         self.translation_vector = calibrate[6]
         essential_matrix = calibrate[7]
-        fundamental_matrix = calibrate[8]
+        self.fundamental_matrix = calibrate[8]
 
     def stereo_rectify(self):
         rectify = cv2.stereoRectify(self.left_camera_matrix,
