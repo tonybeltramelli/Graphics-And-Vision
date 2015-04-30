@@ -33,6 +33,8 @@ from Cameras                    import CamerasParameters
 from Processing.Calibration     import Calibration
 from Processing.CalibrationEnum import CalibrationEnum
 from Processing.Augmented       import Augmented
+from Processing                 import Utils
+from Settings                   import Constant as C
 
 ########################################################################
 class OpenCV3D(object):
@@ -174,7 +176,12 @@ end_header
                 # Grabs the next frame from capturing device.
                 StereoCameras.Instance.Grab()
                 # Decodes and returns the grabbed video frames.
-                leftImage, rightImage = StereoCameras.Instance.Retrieve()
+
+                # leftImage, rightImage = StereoCameras.Instance.Retrieve()
+                # TODO: Uncomment
+
+                leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_1, 30)
+                rightImage = Utils.get_frame_from_video(C.VIDEO_RIGHT_1, 30)
 
                 # Find the pattern in the image.
                 leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage,  not self.IsDrawing)
@@ -195,11 +202,12 @@ end_header
                 elif Configuration.Instance.Calibration.IsCalibrated:
                     # Check if the system is drawing some object.
                     if self.IsDrawing:
-                        # If both pattern have been recognized, start the calibration process.
+                        print "Start drawing"
                         if leftCorners is not None and rightCorners is not None:
                             self.__Augmentation(leftCorners,  leftImage)
-                            # self.__Augmentation(rightCorners, rightImage, True)
+                            # self.__Augmentation(rightCorners, rightImage, CameraEnum.RIGHT)
                             # TODO: Uncomment or delete
+                        print "Done drawing"
                     # Otherwise, estimates the depth map from two stereo images.
                     else:
                         self.__DepthMap(leftImage, rightImage)
@@ -225,59 +233,14 @@ end_header
             # Letter "d" key.
             elif inputKey == ord("d"):
                 self.IsDrawing = not self.IsDrawing
+            # elif inputKey == ord("j"):
+            #     lImg = Utils.get_frame_from_video(C.VIDEO_LEFT_3, 25)
+            #     rImg = Utils.get_frame_from_video(C.VIDEO_RIGHT_3, 25)
+            #     combImg = self.__CombineImages(lImg, rImg, 0.5)
+            #     cv2.imshow("TESTING", combImg)
 
         # Closes all video capturing devices.
         StereoCameras.Instance.Release()
-        # while True:
-        #
-        #     # Check if the fundamental matrix process is running.
-        #     if not self.IsFrozen:
-        #
-        #         # Grabs the next frame from capturing device.
-        #         StereoCameras.Instance.Grab()
-        #         # Decodes and returns the grabbed video frames.
-        #         leftImage, rightImage = StereoCameras.Instance.Retrieve()
-        #
-        #         # Find the pattern in the image.
-        #         leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage)
-        #         rightCorners = Configuration.Instance.Pattern.FindCorners(rightImage)
-        #
-        #         # Check if the calibration process is running.
-        #         if self.IsCalibrating:
-        #             # If both pattern have been recognized, start the calibration process.
-        #             if leftCorners is not None and rightCorners is not None:
-        #                 self.__Calibrate(leftCorners, rightCorners)
-        #             # Otherwise, stop the calibrations process.
-        #             else:
-        #                 self.IsCalibrating = False
-        #
-        #         # Check if the system is calibrated.
-        #         elif Configuration.Instance.Calibration.IsCalibrated:
-        #             # Estimate the depth map from two stereo images.
-        #             self.__DepthMap(leftImage, rightImage)
-        #
-        #         # Combine two stereo images in only one window.
-        #         self.Image = self.__CombineImages(leftImage, rightImage, 0.5)
-        #         # self.Image = self.__CombineImages(leftImage, rightImage, 1.0) # TODO: Change back
-        #         cv2.imshow("Original", self.Image)
-        #
-        #     # Check what the user wants to do.
-        #     inputKey = cv2.waitKey(1)
-        #     # Esc or letter "q" key.
-        #     if inputKey == 27 or inputKey == ord("q"):
-        #         break
-        #     # Space key.
-        #     elif inputKey == 32:
-        #         self.IsCalibrating = True
-        #     # Letter "s" key.
-        #     elif inputKey == ord("s"):
-        #         self.IsSaving = True
-        #     # Letter "f" key.
-        #     elif inputKey == ord("f"):
-        #         self.IsFrozen = not self.IsFrozen
-        #
-        # # Closes all video capturing devices.
-        # StereoCameras.Instance.Release()
         # Close all OpenCV windows.
         cv2.destroyAllWindows()
 
@@ -311,10 +274,6 @@ end_header
         print points
         x1 = points[::2]
         x2 = points[1::2]
-        print "---------------------------"
-        print x1
-        print "---------------------------"
-        print x2
         return x1, x2
 
     def computeEpipole(self, F):
@@ -322,44 +281,24 @@ end_header
         e = V[-1]
         return e / e[2]
 
-    def getHardCodedPoints2(self):
-        p = array([
-            [4.08000000e+02, 2.18000000e+02],
-            [9.56000000e+02, 2.92000000e+02],
-            [3.66000000e+02, 6.84000000e+02],
-            [9.00000000e+02, 7.58000000e+02],
-            [1.05000000e+03, 3.22000000e+02],
-            [1.60400000e+03, 4.10000000e+02],
-            [1.09200000e+03, 6.92000000e+02],
-            [1.64400000e+03, 7.82000000e+02],
-            [3.62000000e+02, 1.82000000e+02],
-            [9.10000000e+02, 2.50000000e+02],
-            [8.98000000e+02, 8.40000000e+01],
-            [1.45200000e+03, 1.72000000e+02],
-            [1.07400000e+03, 1.34000000e+02],
-            [1.63200000e+03, 2.20000000e+02],
-            [8.86000000e+02, 2.82000000e+02],
-            [1.44600000e+03, 3.66000000e+02]
-        ])
-        return p
     def getHardCodedPoints(self):
         p = array([
-            [  4.08000000e+02, 2.18000000e+02, 1.00000000e+00],
-            [  9.56000000e+02, 2.92000000e+02, 1.00000000e+00],
-            [  3.66000000e+02, 6.84000000e+02, 1.00000000e+00],
-            [  9.00000000e+02, 7.58000000e+02, 1.00000000e+00],
-            [  1.05000000e+03, 3.22000000e+02, 1.00000000e+00],
-            [  1.60400000e+03, 4.10000000e+02, 1.00000000e+00],
-            [  1.09200000e+03, 6.92000000e+02, 1.00000000e+00],
-            [  1.64400000e+03, 7.82000000e+02, 1.00000000e+00],
-            [  3.62000000e+02, 1.82000000e+02, 1.00000000e+00],
-            [  9.10000000e+02, 2.50000000e+02, 1.00000000e+00],
-            [  8.98000000e+02, 8.40000000e+01, 1.00000000e+00],
-            [  1.45200000e+03, 1.72000000e+02, 1.00000000e+00],
-            [  1.07400000e+03, 1.34000000e+02, 1.00000000e+00],
-            [  1.63200000e+03, 2.20000000e+02, 1.00000000e+00],
-            [  8.86000000e+02, 2.82000000e+02, 1.00000000e+00],
-            [  1.44600000e+03, 3.66000000e+02, 1.00000000e+00]
+            [3.64000000e+02, 1.80000000e+02, 1.00000000e+00],
+            [9.14000000e+02, 2.52000000e+02, 1.00000000e+00],
+            [3.64000000e+02, 6.82000000e+02, 1.00000000e+00],
+            [8.96000000e+02, 7.60000000e+02, 1.00000000e+00],
+            [1.09800000e+03, 6.96000000e+02, 1.00000000e+00],
+            [1.64600000e+03, 7.82000000e+02, 1.00000000e+00],
+            [2.25000000e+03, 4.06000000e+02, 1.00000000e+00],
+            [4.10000000e+02, 3.20000000e+02, 1.00000000e+00],
+            [6.92000000e+02, 4.00000000e+01, 1.00000000e+00],
+            [1.24400000e+03, 1.18000000e+02, 1.00000000e+00],
+            [4.12000000e+02, 2.22000000e+02, 1.00000000e+00],
+            [9.62000000e+02, 2.90000000e+02, 1.00000000e+00],
+            [8.96000000e+02, 8.40000000e+01, 1.00000000e+00],
+            [1.44800000e+03, 1.72000000e+02, 1.00000000e+00],
+            [8.84000000e+02, 2.84000000e+02, 1.00000000e+00],
+            [1.43800000e+03, 3.68000000e+02, 1.00000000e+00]
         ])
 
         return p
@@ -394,90 +333,59 @@ end_header
                 # Get all points selected by the user.
                 points = np.asarray(self.PointsQueue, dtype=np.float32)
 
-                # Hardcoded points
-                # TODO: Remove when done
                 points = self.getHardCodedPoints()
 
                 # <000> Get the selected points from the left and right images.
                 left, right = self.getSelectedPoints(points)
 
+                left = np.array(left, dtype = np.float32)
+                right = np.array(right, dtype = np.float32)
+
+
                 # TODO: Remove ?
-                x1 = np.float32(left)
-                x2 = np.float32(right)
-                x1 = np.delete(x1, 2, 1)
-                x2 = np.delete(x2, 2, 1)
+                left = np.float32(left)
+                right = np.float32(right)
+                left = np.delete(left, 2, 1)
+                right = np.delete(right, 2, 1)
 
 
                 # <001> Estimate the Fundamental Matrix.
-                # F = self.estimateFundamental(x1, x2)
-                F, mask = cv2.findFundamentalMat(x1, x2, cv2.cv.CV_FM_8POINT)
+                F, mask = cv2.findFundamentalMat(left, right)
 
                 # <002> Save the Fundamental Matrix in the F attribute of the CamerasParameters class.
-                StereoCameras.Instance.Parameters.F = F
-                # CamerasParameters.CamerasParameters.F = F
+                CamerasParameters.CamerasParameters.F = F
 
-                # self.plotEpipolarLine(self.Image, F, [814, 148, 1])
+                # self.build_epipolar_lines(left, F, False)
+                # self.build_epipolar_lines(right, F, True)
 
-                # le = self.computeEpipole(F.T)
-                # re = self.computeEpipole(F)
-                #
-                # xl = le[0]
-                # yl = le[1]
-                # xl = int(xl)
-                # yl = int(yl)
-                #
-                # xr = re[0]
-                # yr = re[1]
-                # xr = int(xr)
-                # yr = int(yr)q
-                #
-                # cv2.circle(self.Image, (xl, yl), 600, (255, 255, 0))
-                # cv2.circle(self.Image, (xr, yr), 600, (255, 0, 255))
-                # cv2.circle(self.Image, (814, 148), 3, (0, 0, 255))
-
+                # Update the fundamental matrix flag and release the system
                 e = self.computeEpipole(F)
-
-                # print "-------- PRE"
-                # print left
-                #
-                # lp = array(None)
-
-                # for i in range(8):
-                #     lp.append(self.plotEpipolarLine(self.Image, F, left[i], e, True))
-                # lp.append([1, 100])
-                # lp.append([100, 200])
-                # lp.append([200, 250])
-                # lp.append([250, 10])
-                # lp.append([10, 99])
-                # cv2.cv.ComputeCorrespondEpilines(left, self.Image, F, lp)
-                #
-                # print "LINE_POINTS"
-                # print lp
-                #
-                # for i in range(len(lp)):
-                #     if i > 0:
-                #         cv2.line(self.Image, (int(lp[i-1][0]), int(lp[i-1][1])), (int(lp[i][0]), int(lp[i][1])), (255, 255, 0), 3)
-
-
-                # Get each point from left image.
-                # for point in left:
-
-                    # <003> Estimate the epipolar line.
-
-                    # <004> Define the initial and final points of the line.
-
-                    # <005> Draws the epipolar line in the input image.
-
-                # Get each point from right image.
-                # for point in right:
-
-                    # <006> Estimate the epipolar line.
-
-                # Show the final result of this process to the user.
-                cv2.imshow("Original", self.Image)
 
                 # Update the fundamental matrix flag and release the system
                 self.hasFundamentalMatrix = True
+
+    def build_epipolar_lines(self, points, fundamental_matrix, is_right, show_lines=True):
+        lines = cv2.computeCorrespondEpilines(points, 2 if is_right else 1, fundamental_matrix)
+        lines = lines.reshape(-1, 3)
+
+        if show_lines:
+            self.draw_lines(self.Image, lines, points, is_right)
+
+    def draw_lines(self, img, lines, points, is_right):
+        height, width, layers = img.shape
+
+        color = (0, 0, 255) if not is_right else (255, 0, 0)
+        x_gap_point = 0 if not is_right else width / 2
+        x_gap_line = 0 if is_right else width / 2
+
+        for height, row in zip(lines, points):
+            x_start, y_start = map(int, [0, -height[2]/height[1]])
+            x_end, y_end = map(int, [width/2, -(height[2]+height[0]*(width/2))/height[1]])
+
+            cv2.line(img, (x_start + x_gap_line, y_start), (x_end + x_gap_line, y_end), color, 1)
+            cv2.circle(img, (int(row[0] + x_gap_point), int(row[1])), 3, color)
+
+        return img
 
     def __Calibrate(self, leftCorners, rightCorners):
         """Calibrate the stereo camera for each new detected pattern."""
@@ -557,83 +465,137 @@ end_header
         objectPoints = Configuration.Instance.Pattern.CalculatePattern()
 
         # <021> Prepares the external parameters.
-        cameraMatrix = StereoCameras.Instance.Parameters.CameraMatrix2
-        distCoeffs = StereoCameras.Instance.Parameters.DistCoeffs2
+        if camera == CameraEnum.LEFT:
+            cameraMatrix = StereoCameras.Instance.Parameters.CameraMatrix1
+            distCoeffs = StereoCameras.Instance.Parameters.DistCoeffs1
+        else:
+            cameraMatrix = StereoCameras.Instance.Parameters.CameraMatrix2
+            distCoeffs = StereoCameras.Instance.Parameters.DistCoeffs2
 
         # <022> Get the points of the coordinate system.
         points = Configuration.Instance.Augmented.CoordinateSystem
+        coord = points
 
 
         # Defines the pose estimation of the coordinate system.
-        points = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, points, cameraMatrix, distCoeffs)
+        # estimation = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, points, cameraMatrix, distCoeffs)
+        estimation = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, points, cameraMatrix, distCoeffs)
 
         # <025> Draws the coordinate system over the chessboard pattern.
-        # print "----------------------------"
-        # print "Points:"
         # print points.shape
-        # print points
-        # print "----------------------------"
+        # print estimation.shape
 
-        # r = points[0]
-        # p = r[0]
-        # x = int(p[0])
-        # y = int(p[1])
-        # print x
-        # print y
+        # cv2.line(image, (100,100), tuple(estimation[0].ravel()), (255,0,0), 5)
+        # cv2.line(image, (100,100), tuple(estimation[1].ravel()), (0,255,0), 5)
+        # cv2.line(image, (100,100), tuple(estimation[2].ravel()), (0,0,255), 5)
+
+
+
+        # c = points[0]
+        # xa = points[2]
+        # ya = points[18]
+        #
+        # xc = int(c[0][0])
+        # yc = int(c[0][1])
+        #
+        # xxa = int(xa[0][0])
+        # yxa = int(xa[0][1])
+        #
+        # xya = int(ya[0][0])
+        # yya = int(ya[0][1])
+        #
+        # cv2.line(image, (xc, yc), (xxa, yxa), (255, 0, 0), 3)
+        # cv2.line(image, (xc, yc), (xya, yya), (0, 255, 0), 3)
+
+        # for i in range(10):
+        #     p = points[i]
+        #     r = p[0]
+        #     x = int(r[0])
+        #     y = int(r[1])
+        #     cv2.circle(image, (x, y), 10, (255, 0, 0), 3)
+
+
+        first = estimation[0]
+        r = first[0]
+        x = int(r[0])
+        y = int(r[1])
+
+        # print "x, y: (%d, %d)" % (x, y)
+
         # cv2.circle(image, (x, y), 10, (255, 0, 0), 3)
-        # cv2.imshow("lines", image)
 
-        r = points[0]
-        s = r[0]
-        x = int(s[0])
-        y = int(s[1])
-        cv2.circle(image, (x, y), 10, (255, 0, 0), 3)
 
-        # tmpx = 0
-        # tmpy = 0
-        # for i in range(points.shape[0]):
-        #     for p in points[i]:
-        #         x = int(p[0])
-        #         y = int(p[1])
-        #         cv2.circle(image, (x, y), 10, (255, 0, 0), 3)
-                # if (tmpx != 0) and (tmpy != 0):
-                #     cv2.line(image, (tmpx, tmpy), (x, y), (255, 255, 0), 3)
-                #     print "line (%d, %d) - (%d, %d)" % (tmpx, tmpy, x, y)
-                # tmpx = x
-                # tmpy = y
-        # cv2.imshow("lines", image)
-                # print "------------------"
-                # print p[0]
-                # print "------------------"
-                # print p[1]
-                # print "------------------"
 
+        # print "-------------------------"
+        # print first.shape
+        # print points.shape
+        # print "-------------------------"
+        #
+        # # print first.ravel().shape
+        # # print first
+        # # print first.ravel()
+        #
+        # firstHomog = np.float32([[first.ravel()[0], first.ravel()[1], 1]]).ravel()
+        # print firstHomog
+        #
+        # newCoord = dot(points, firstHomog)
+        # print newCoord
+
+        # np.float32([[2, 0, 0], [0, 2, 0], [0, 0, -2]]).reshape(-1, 3)
+
+
+        # imgpts = estimation
+        #
+        print "pre"
+        imgpts = estimation
+        # image = self.draw(image,corners,imgpts)
+
+        corner = tuple(corners[0].ravel())
+        print tuple(imgpts[0].ravel())
+        print tuple(imgpts[1].ravel())
+        print tuple(imgpts[2].ravel())
+        cv2.line(image, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
+        cv2.line(image, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
+        cv2.line(image, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
+
+
+
+
+
+        # for p in imgpts:
+        #     cv2.circle(image, tuple(p[0].ravel()), 10, (0, 255, 0), 3)
+        print "post"
 
         # <026> Get the points of the cube.
-        cube = Configuration.Instance.Augmented.Cube
+        # cube = Configuration.Instance.Augmented.Cube
+        #
+        # # <027> Defines the pose estimation of the cube.
+        # cube = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, cube, cameraMatrix, distCoeffs)
+        #
+        # # <028> Draws ground floor in green color.
+        # # SIGB: Uses the last four points to do this.
+        #
+        # # for p in cube:
+        # #     r = p[0]
+        # #     x = int(r[0])
+        # #     y = int(r[1])
+        # #     cv2.circle(image, (x, y), 10, (0, 0, 255), 3)
+        #
+        # x1 = cube[20][0][0]
+        # y1 = cube[20][0][1]
+        # x2 = cube[22][0][0]
+        # y2 = cube[22][0][1]
+        # x3 = cube[38][0][0]
+        # y3 = cube[38][0][1]
+        # x4 = cube[40][0][0]
+        # y4 = cube[40][0][1]
+        # cv2.line(image, (int(x1), int(y1)), (int(x2), int(y2)), (0,0,255), 2)
+        # cv2.line(image, (int(x2), int(y2)), (int(x4), int(y4)), (255,0,0), 2)
+        # cv2.line(image, (int(x4), int(y4)), (int(x3), int(y3)), (0,255,0), 2)
+        # cv2.line(image, (int(x3), int(y3)), (int(x1), int(y1)), (0,0,0), 2)
 
-        # <027> Defines the pose estimation of the cube.
-        cube = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, cube, cameraMatrix, distCoeffs)
+        # cv2.rectangle(image, (x1, y1), (x4, y4), (0, 255, 0), thickness = cv2.cv.CV_FILLED)
 
-        # <028> Draws ground floor in green color.
-        # SIGB: Uses the last four points to do this.
-        x1 = cube[50][0][0]
-        y1 = cube[50][0][1]
-        x2 = cube[51][0][0]
-        y2 = cube[51][0][1]
-        x3 = cube[52][0][0]
-        y3 = cube[52][0][1]
-        x4 = cube[53][0][0]
-        y4 = cube[53][0][1]
-        cv2.line(image, (int(x1), int(y1)), (int(x2), int(y2)), (255,0,255), 2)
-        cv2.line(image, (int(x2), int(y2)), (int(x3), int(y3)), (255,0,255), 2)
-        cv2.line(image, (int(x4), int(y4)), (int(x4), int(y4)), (255,0,255), 2)
-        cv2.line(image, (int(x4), int(y4)), (int(x1), int(y1)), (255,0,255), 2)
-
-        # cv2.imshow("lines", image)
-        # print x
-        # print y
-        # print "11111111111111111111111111"
 
         # <029> Draw pillars in blue color.
         # SIGB: Uses the intersections between the first four points and the last four points.
@@ -657,6 +619,17 @@ end_header
         threshold = 88
 
         # <035> Applies the texture mapping over all cube sides.
+
+
+    def draw(self, img, corners, imgpts):
+        corner = tuple(corners[0].ravel())
+        print tuple(imgpts[0].ravel())
+        print tuple(imgpts[1].ravel())
+        print tuple(imgpts[2].ravel())
+        img = cv2.line(img, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
+        img = cv2.line(img, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
+        img = cv2.line(img, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
+        return img
 
     def __SavePLY(self, disparity, image):
         # Check if the system is calibrated.

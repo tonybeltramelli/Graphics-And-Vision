@@ -53,7 +53,7 @@ class Augmented(object):
         """Define the pose estimation of the calibration pattern."""
         # <023> Find the rotation and translation vectors.
         # Reshape object points for solvePnP function
-        objectPoints = objectPoints.reshape(objectPoints.shape + (1,))
+        # objectPoints = objectPoints.reshape(objectPoints.shape + (1,))
 
         retval, rvec, tvec = cv2.solvePnP(objectPoints, corners, cameraMatrix, distCoeffs)
 
@@ -62,7 +62,8 @@ class Augmented(object):
         self.__translation = tvec
 
         # <024> Project 3D points to image plane.
-        imagePoints, jacobian = cv2.projectPoints(objectPoints, rvec, tvec, cameraMatrix, distCoeffs, points)
+        # imagePoints, jacobian = cv2.projectPoints(objectPoints, rvec, tvec, cameraMatrix, distCoeffs, points)
+        imagePoints, jacobian = cv2.projectPoints(points, rvec, tvec, cameraMatrix, distCoeffs)
 
         # Return the final result.
         return imagePoints
