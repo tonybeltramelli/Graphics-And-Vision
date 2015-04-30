@@ -60,7 +60,7 @@ class StereoCameraCalibrator:
 
                 UMedia.show(UGraphics.get_combined_image(left_img, right_img))
                 UInteractive.pause()
-                
+
             self.left_points.append(left_coordinates.reshape(-1, 2))
             self.right_points.append(right_coordinates.reshape(-1, 2))
             self._object_points.append(self._pattern_points)
