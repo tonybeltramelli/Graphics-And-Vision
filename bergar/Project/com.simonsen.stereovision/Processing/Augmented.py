@@ -74,16 +74,94 @@ class Augmented(object):
         h, w = image.shape[:2]
 
         # <031> Open the texture mapping image and get its size.
+        textureMap = cv2.imread(filename)
+        th, tw = textureMap.shape[:2]
 
         # Creates a mask with the same size of the input image.
-        # whiteMask = np.ones(texture.shape, dtype=np.uint8) * 255
+        whiteMask = np.ones(textureMap.shape[:2], dtype=np.uint8) * 255
+        blackMask = np.zeros(image.shape[:2], dtype=np.uint8)
+        # cv2.imshow("mask", whiteMask)
         # TODO: FINISH
 
         # <032> Estimate the homography matrix between the texture mapping and the cube face.
+        # srcPts = np.float32([[0, 0], [tw, 0], [0, th], [tw, th]])
+        srcPts = np.float32([[0, th], [tw, th], [tw, 0], [0, 0]])
+
+
+        points = points.reshape(4,2)
+        H, _ = cv2.findHomography(srcPts, points)
+        # H, _ = cv2.findHomography(points, srcPts)
+        # H2, _ = cv2.findHomography(srcPts, points)
+        # H, _ = cv2.findHomography(points, srcPts)
+
+        print points
+        print "----"
+        print srcPts
+
+
+        # cv2.drawContours(blackMask, [p2],-1,(0,255,0),-3)
+
+        # print H
 
         # <033> Applies a perspective transformation to the texture mapping image.
+        textureWarped = cv2.warpPerspective(textureMap, H, (w, h))
+
+        wFirst = 0.1
+        wSecond = 0.9
+        gamma = 9
+        M = cv2.addWeighted(image, wFirst, textureWarped, wSecond, gamma)
+
+
+        cv2.imshow("testsetst", textureWarped)
+
+        # print textureWarped.shape
+
+        # blackMask = np.zeros(image.shape[:2], dtype=np.uint8)
+        # whiteMask = np.ones(textureWarped.shape[:2], dtype=np.uint8) * 255
+        # whiteMask = cv2.resize(whiteMask, (w, h))
+
+
+
+        # print whiteMask
+
+        # cv2.imshow("Whitemask", whiteMask)
+        # cv2.imshow("blackMask", blackMask)
+
+        # print blackMask.shape
+        #
+        # print whiteMask.shape
+
+        # tmp = cv2.bitwise_and(blackMask, whiteMask)
+        # cv2.imshow("bit and", tmp)
+
+
+
+        # cv2 . resize ( newbackGround , (h , w ) )
+
+
+        # mask = np.zeros(image.shape[:2], dtype = "uint8")
+        # (cX, cY) = (image.shape[1] / 2, image.shape[0] / 2)
+        # cv2.rectangle(mask, (cX - 75, cY - 75), (cX + 75, cY + 75), 255, -1)
+        # cv2.imshow("mask", mask)
 
         # <034> Create a mask from the cube face using the texture mapping image.
+        # blackMask = np.zeros(image.shape[:2], dtype=np.uint8)
+        # whiteMask = np.ones(textureMap.shape[:2], dtype=np.uint8) * 255
+        #
+        # print blackMask.shape
+        # print whiteMask.shape
+        #
+        # for i in range(whiteMask.shape[0]):
+        #     for j in range(whiteMask.shape[1]):
+        #         blackMask[i][j] = whiteMask[i][j]
+
+
+        # cv2.bitwise_and(blackMask, whiteMask)
+
+        # cv2.imshow("whiteMask", whiteMask)
+        # cv2.imshow("blackMask", blackMask)
+
+
 
     def ShadeFace(self, image, points, normals, projections):
         shadeRes = 10

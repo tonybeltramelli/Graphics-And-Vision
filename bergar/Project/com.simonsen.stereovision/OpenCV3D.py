@@ -177,11 +177,11 @@ end_header
                 StereoCameras.Instance.Grab()
                 # Decodes and returns the grabbed video frames.
 
-                leftImage, rightImage = StereoCameras.Instance.Retrieve()
+                # leftImage, rightImage = StereoCameras.Instance.Retrieve()
                 # TODO: Uncomment
 
-                # leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_1, 30)
-                # rightImage = Utils.get_frame_from_video(C.VIDEO_RIGHT_1, 30)
+                leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_4, 30)
+                rightImage = Utils.get_frame_from_video(C.VIDEO_RIGHT_4, 30)
 
                 # Find the pattern in the image.
                 leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage,  not self.IsDrawing)
@@ -505,7 +505,7 @@ end_header
         cv2.drawContours(image, [cubeEstimation[4:]],-1,(0,0,255),3)
 
         # Check if it is necessary to apply a texture mapping.
-        if camera == CameraEnum.LEFT:
+        if camera == CameraEnum.RIGHT:
             return
 
         # Define each correspoding cube face.
@@ -519,7 +519,27 @@ end_header
         # Threshould used for selecting which cube faces will be drawn.
         threshold = 88
 
+        uf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, UpFace, cameraMatrix, distCoeffs)
+        rf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, RightFace, cameraMatrix, distCoeffs)
+        tf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, TopFace, cameraMatrix, distCoeffs)
+        lf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, LeftFace, cameraMatrix, distCoeffs)
+        df = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, DownFace, cameraMatrix, distCoeffs)
+
+        # print "oooooooooooooooooooooooooooooooooooooooo"
+        # print uf.shape
+        # print uf
+        # print "oooooooooooooooooooooooooooooooooooooooo"
+        # print UpFace.shape
+        # print UpFace
+        # print "oooooooooooooooooooooooooooooooooooooooo"
+
         # <035> Applies the texture mapping over all cube sides.
+        # Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_UP, uf)
+        # Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_RIGHT, rf)
+        # Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_UP, UpFace)
+        Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_TOP, tf)
+        # Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_LEFT, lf)
+        # Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_DOWN, df)
 
 
     def draw(self, img, corners, imgpts):
