@@ -177,11 +177,11 @@ end_header
                 StereoCameras.Instance.Grab()
                 # Decodes and returns the grabbed video frames.
 
-                # leftImage, rightImage = StereoCameras.Instance.Retrieve()
+                leftImage, rightImage = StereoCameras.Instance.Retrieve()
                 # TODO: Uncomment
 
-                leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_1, 30)
-                rightImage = Utils.get_frame_from_video(C.VIDEO_RIGHT_1, 30)
+                # leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_1, 30)
+                # rightImage = Utils.get_frame_from_video(C.VIDEO_RIGHT_1, 30)
 
                 # Find the pattern in the image.
                 leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage,  not self.IsDrawing)
@@ -474,134 +474,35 @@ end_header
 
         # <022> Get the points of the coordinate system.
         points = Configuration.Instance.Augmented.CoordinateSystem
-        coord = points
 
 
         # Defines the pose estimation of the coordinate system.
-        # estimation = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, points, cameraMatrix, distCoeffs)
-        estimation = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, points, cameraMatrix, distCoeffs)
+        coordEstimation = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, points, cameraMatrix, distCoeffs)
 
         # <025> Draws the coordinate system over the chessboard pattern.
-        # print points.shape
-        # print estimation.shape
-
-        # cv2.line(image, (100,100), tuple(estimation[0].ravel()), (255,0,0), 5)
-        # cv2.line(image, (100,100), tuple(estimation[1].ravel()), (0,255,0), 5)
-        # cv2.line(image, (100,100), tuple(estimation[2].ravel()), (0,0,255), 5)
-
-
-
-        # c = points[0]
-        # xa = points[2]
-        # ya = points[18]
-        #
-        # xc = int(c[0][0])
-        # yc = int(c[0][1])
-        #
-        # xxa = int(xa[0][0])
-        # yxa = int(xa[0][1])
-        #
-        # xya = int(ya[0][0])
-        # yya = int(ya[0][1])
-        #
-        # cv2.line(image, (xc, yc), (xxa, yxa), (255, 0, 0), 3)
-        # cv2.line(image, (xc, yc), (xya, yya), (0, 255, 0), 3)
-
-        # for i in range(10):
-        #     p = points[i]
-        #     r = p[0]
-        #     x = int(r[0])
-        #     y = int(r[1])
-        #     cv2.circle(image, (x, y), 10, (255, 0, 0), 3)
-
-
-        first = estimation[0]
-        r = first[0]
-        x = int(r[0])
-        y = int(r[1])
-
-        # print "x, y: (%d, %d)" % (x, y)
-
-        # cv2.circle(image, (x, y), 10, (255, 0, 0), 3)
-
-
-
-        # print "-------------------------"
-        # print first.shape
-        # print points.shape
-        # print "-------------------------"
-        #
-        # # print first.ravel().shape
-        # # print first
-        # # print first.ravel()
-        #
-        # firstHomog = np.float32([[first.ravel()[0], first.ravel()[1], 1]]).ravel()
-        # print firstHomog
-        #
-        # newCoord = dot(points, firstHomog)
-        # print newCoord
-
-        # np.float32([[2, 0, 0], [0, 2, 0], [0, 0, -2]]).reshape(-1, 3)
-
-
-        # imgpts = estimation
-        #
-        print "pre"
-        imgpts = estimation
-        # image = self.draw(image,corners,imgpts)
-
         corner = tuple(corners[0].ravel())
-        print tuple(imgpts[0].ravel())
-        print tuple(imgpts[1].ravel())
-        print tuple(imgpts[2].ravel())
-        cv2.line(image, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
-        cv2.line(image, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
-        cv2.line(image, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
-
-
-
-
-
-        # for p in imgpts:
-        #     cv2.circle(image, tuple(p[0].ravel()), 10, (0, 255, 0), 3)
-        print "post"
+        cv2.line(image, corner, tuple(coordEstimation[0].ravel()), (255,0,0), 5)
+        cv2.line(image, corner, tuple(coordEstimation[1].ravel()), (0,255,0), 5)
+        cv2.line(image, corner, tuple(coordEstimation[2].ravel()), (0,0,255), 5)
 
         # <026> Get the points of the cube.
-        # cube = Configuration.Instance.Augmented.Cube
-        #
-        # # <027> Defines the pose estimation of the cube.
-        # cube = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, cube, cameraMatrix, distCoeffs)
-        #
-        # # <028> Draws ground floor in green color.
-        # # SIGB: Uses the last four points to do this.
-        #
-        # # for p in cube:
-        # #     r = p[0]
-        # #     x = int(r[0])
-        # #     y = int(r[1])
-        # #     cv2.circle(image, (x, y), 10, (0, 0, 255), 3)
-        #
-        # x1 = cube[20][0][0]
-        # y1 = cube[20][0][1]
-        # x2 = cube[22][0][0]
-        # y2 = cube[22][0][1]
-        # x3 = cube[38][0][0]
-        # y3 = cube[38][0][1]
-        # x4 = cube[40][0][0]
-        # y4 = cube[40][0][1]
-        # cv2.line(image, (int(x1), int(y1)), (int(x2), int(y2)), (0,0,255), 2)
-        # cv2.line(image, (int(x2), int(y2)), (int(x4), int(y4)), (255,0,0), 2)
-        # cv2.line(image, (int(x4), int(y4)), (int(x3), int(y3)), (0,255,0), 2)
-        # cv2.line(image, (int(x3), int(y3)), (int(x1), int(y1)), (0,0,0), 2)
+        cube = Configuration.Instance.Augmented.Cube
+        # <027> Defines the pose estimation of the cube.
+        cubeEstimation = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, cube, cameraMatrix, distCoeffs)
+        cubeEstimation = np.int32(cubeEstimation).reshape(-1,2)
 
-        # cv2.rectangle(image, (x1, y1), (x4, y4), (0, 255, 0), thickness = cv2.cv.CV_FILLED)
-
+        # <028> Draws ground floor in green color.
+        # SIGB: Uses the last four points to do this.
+        cv2.drawContours(image, [cubeEstimation[:4]],-1,(0,255,0),-3)
 
         # <029> Draw pillars in blue color.
         # SIGB: Uses the intersections between the first four points and the last four points.
+        for i,j in zip(range(4),range(4,8)):
+            cv2.line(image, tuple(cubeEstimation[i]), tuple(cubeEstimation[j]),(255),3)
 
         # <030> Draw top layer in red color.
         # SIGB: Uses the first four points to do this.
+        cv2.drawContours(image, [cubeEstimation[4:]],-1,(0,0,255),3)
 
         # Check if it is necessary to apply a texture mapping.
         if camera == CameraEnum.LEFT:
