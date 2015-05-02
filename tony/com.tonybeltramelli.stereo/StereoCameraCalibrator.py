@@ -67,7 +67,6 @@ class StereoCameraCalibrator:
 
             self.stereo_calibrate()
             self.stereo_rectify()
-            self.undistort_rectify_map()
 
             self._n -= 1
 
@@ -114,22 +113,21 @@ class StereoCameraCalibrator:
         self.right_projection_matrix = rectify[3]
         self.disparity_to_depth_matrix = rectify[4]
 
-    def undistort_rectify_map(self):
-        self.left_map = cv2.initUndistortRectifyMap(self.left_camera_matrix,
-                                                    self.left_distortion_coefficient,
-                                                    self.left_rectification_transform,
-                                                    self.left_projection_matrix,
-                                                    (self._width, self._height), cv2.CV_16SC2)
-
-        self.right_map = cv2.initUndistortRectifyMap(self.right_camera_matrix,
-                                                     self.right_distortion_coefficient,
-                                                     self.right_rectification_transform,
-                                                     self.right_projection_matrix,
-                                                     (self._width, self._height), cv2.CV_16SC2)
-
     def get_undistorted_rectified_images(self, left_img, right_img):
-        left_img = cv2.remap(left_img, self.left_map[0], self.left_map[1], cv2.INTER_LINEAR)
-        right_img = cv2.remap(right_img, self.right_map[0], self.right_map[1], cv2.INTER_LINEAR)
+        left_map_x, left_map_y = cv2.initUndistortRectifyMap(self.left_camera_matrix,
+                                                             self.left_distortion_coefficient,
+                                                             self.left_rectification_transform,
+                                                             self.left_projection_matrix,
+                                                             (self._width, self._height), cv2.CV_16SC2)
+
+        right_map_x, right_map_y = cv2.initUndistortRectifyMap(self.right_camera_matrix,
+                                                               self.right_distortion_coefficient,
+                                                               self.right_rectification_transform,
+                                                               self.right_projection_matrix,
+                                                               (self._width, self._height), cv2.CV_16SC2)
+
+        left_img = cv2.remap(left_img, left_map_x, left_map_y, cv2.INTER_LINEAR)
+        right_img = cv2.remap(right_img, right_map_x, right_map_y, cv2.INTER_LINEAR)
 
         return left_img, right_img
 

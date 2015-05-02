@@ -13,15 +13,25 @@ class DepthMap:
     _min_disparity = 0
     _block_size = 1
 
+    _disparity_map = None
+
     def __init__(self, output_path):
         self._output_path = output_path
 
-    def get(self, left_img, right_img):
+    def compute(self, left_img, right_img):
         self._left_img = left_img
         self._right_img = right_img
 
         self.show_setting_window()
-        return self.get_disparity_map(self._min_disparity, self._block_size)
+        self.update()
+
+        UInteractive.pause()
+        return self._disparity_map
+
+    def update(self):
+        self._disparity_map = self.get_disparity_map(self._min_disparity, self._block_size)
+
+        UMedia.show(self._disparity_map)
 
     def get_disparity_map(self, min_disparity=0, block_size=1):
         sgbm = cv2.StereoSGBM_create(min_disparity, min_disparity + 16, block_size,
@@ -72,6 +82,7 @@ end_header
         r = 100
         g = 100
         b = 100
+
         return [p[0], p[1], p[2], r, g, b]
 
     def show_setting_window(self):
@@ -82,7 +93,9 @@ end_header
     def update_min_disparity(self, value):
         if value % 16 == 0:
             self._min_disparity = value
+            self.update()
 
     def update_block_size(self, value):
         if value % 2 != 0:
             self._block_size = value
+            self.update()
