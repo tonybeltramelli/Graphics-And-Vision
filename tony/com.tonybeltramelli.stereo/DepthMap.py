@@ -2,6 +2,7 @@ __author__ = 'tbeltramelli'
 
 from UInteractive import *
 from UMath import *
+from Filtering import *
 
 
 class DepthMap:
@@ -40,7 +41,7 @@ class DepthMap:
                                      uniquenessRatio=10, speckleWindowSize=100,
                                      speckleRange=32, mode=cv2.STEREO_SGBM_MODE_HH)
 
-        disparity = sgbm.compute(self._left_img, self._right_img)
+        disparity = sgbm.compute(Filtering.get_gray_scale_image(self._left_img), Filtering.get_gray_scale_image(self._right_img))
 
         min_val = np.min(np.min(disparity, axis=1), axis=0)
         max_val = np.max(np.max(disparity, axis=1), axis=0)

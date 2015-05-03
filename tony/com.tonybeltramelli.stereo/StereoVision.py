@@ -19,10 +19,10 @@ class StereoVision:
         self.output_path = output_path
 
     def epipolar_geometry(self, left_video_path, right_video_path, frame_for_epipolar_geometry=15):
-        left_img = cv2.pyrDown(UMedia.get_frame_from_video(self.media_path + left_video_path, frame_for_epipolar_geometry))
-        right_img = cv2.pyrDown(UMedia.get_frame_from_video(self.media_path + right_video_path, frame_for_epipolar_geometry))
+        left_img = UMedia.get_frame_from_video(self.media_path + left_video_path, frame_for_epipolar_geometry)
+        right_img = UMedia.get_frame_from_video(self.media_path + right_video_path, frame_for_epipolar_geometry)
 
-        epipole = EpipolarGeometry(UGraphics.get_combined_image(left_img, right_img))
+        epipole = EpipolarGeometry(UGraphics.get_combined_image(left_img, right_img, 0.5))
 
     def stereo_vision(self, left_video_path, right_video_path, calibration_images=None):
         self._calibrator = StereoCameraCalibrator()
@@ -32,8 +32,8 @@ class StereoVision:
             UMedia.load_videos([self.media_path + left_video_path, self.media_path + right_video_path], self.process)
         else:
             for index in calibration_images:
-                left_img = cv2.pyrDown(cv2.imread(self.media_path + "l" + str(index) + ".jpg"))
-                right_img = cv2.pyrDown(cv2.imread(self.media_path + "r" + str(index) + ".jpg"))
+                left_img = cv2.imread(self.media_path + "l" + str(index) + ".jpg")
+                right_img = cv2.imread(self.media_path + "r" + str(index) + ".jpg")
 
                 if self._calibrator.calibrate(left_img, right_img, False):
                     epipole = EpipolarGeometry(UGraphics.get_combined_image(left_img, right_img), False)
@@ -46,10 +46,9 @@ class StereoVision:
 
                     epipole.show_lines(left_points, right_points, self._calibrator.fundamental_matrix)
                     UMedia.show(self.get_calibration_img(left_img, right_img))
+                    UInteractive.pause()
 
     def process(self, images):
-        images = map(cv2.pyrDown, images)
-
         if self._calibrator.is_calibrated:
             calibration_img = self.get_calibration_img(images[0], images[1])
             disparity_map = self._depth.compute(images[0], images[1])
@@ -63,12 +62,10 @@ class StereoVision:
 
     def get_calibration_img(self, left_img, right_img):
         original_img = UGraphics.get_combined_image(left_img, right_img, 0.5)
-
         left_img, right_img = self._calibrator.get_undistorted_rectified_images(left_img, right_img)
-
         rectified_img = UGraphics.get_combined_image(left_img, right_img, 0.5)
 
-        return UGraphics.get_combined_image(original_img, rectified_img, use_horizontally=False)
+        return UGraphics.get_combined_image(original_img, rectified_img, 0.75, False)
 
     def disparity(self):
         self._depth = DepthMap(self.output_path)
