@@ -12,8 +12,7 @@ class StereoCameraCalibrator:
     _object_points = None
     left_points = None
     right_points = None
-    _width = None
-    _height = None
+    _size = None
 
     left_camera_matrix = None
     right_camera_matrix = None
@@ -46,7 +45,9 @@ class StereoCameraCalibrator:
         self.right_points = []
 
     def calibrate(self, left_img, right_img, to_draw=False):
-        self._height, self._width, layers = left_img.shape
+        height, width, layers = left_img.shape
+
+        self._size = (width, height)
 
         left_is_found, left_coordinates = cv2.findChessboardCorners(left_img, self._pattern_size, cv2.CALIB_CB_FAST_CHECK)
         right_is_found, right_coordinates = cv2.findChessboardCorners(right_img, self._pattern_size, cv2.CALIB_CB_FAST_CHECK)
@@ -66,7 +67,7 @@ class StereoCameraCalibrator:
             self._object_points.append(self._pattern_points)
 
             self.stereo_calibrate()
-            self.stereo_rectify()
+            #self.stereo_rectify()
 
             self._n -= 1
 
@@ -87,7 +88,8 @@ class StereoCameraCalibrator:
                                         self.left_distortion_coefficient,
                                         self.right_camera_matrix,
                                         self.right_distortion_coefficient,
-                                        (self._width, self._height), criteria=criteria, flags=flags)
+                                        self._size,
+                                        criteria=criteria, flags=flags)
 
         reprojection_error_value = calibrate[0]
         self.left_camera_matrix = calibrate[1]
@@ -104,7 +106,7 @@ class StereoCameraCalibrator:
                                     self.left_distortion_coefficient,
                                     self.right_camera_matrix,
                                     self.right_distortion_coefficient,
-                                    (self._width, self._height),
+                                    self._size,
                                     self.rotation_matrix, self.translation_vector, alpha=0)
 
         self.left_rectification_transform = rectify[0]
@@ -118,13 +120,13 @@ class StereoCameraCalibrator:
                                                              self.left_distortion_coefficient,
                                                              self.left_rectification_transform,
                                                              self.left_projection_matrix,
-                                                             (self._width, self._height), cv2.CV_16SC2)
+                                                             self._size, cv2.CV_16SC2)
 
         right_map_x, right_map_y = cv2.initUndistortRectifyMap(self.right_camera_matrix,
                                                                self.right_distortion_coefficient,
                                                                self.right_rectification_transform,
                                                                self.right_projection_matrix,
-                                                               (self._width, self._height), cv2.CV_16SC2)
+                                                               self._size, cv2.CV_16SC2)
 
         left_img = cv2.remap(left_img, left_map_x, left_map_y, cv2.INTER_LINEAR)
         right_img = cv2.remap(right_img, right_map_x, right_map_y, cv2.INTER_LINEAR)

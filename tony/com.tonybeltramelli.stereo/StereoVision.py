@@ -69,3 +69,12 @@ class StereoVision:
         rectified_img = UGraphics.get_combined_image(left_img, right_img, 0.5)
 
         return UGraphics.get_combined_image(original_img, rectified_img, use_horizontally=False)
+
+    def disparity(self):
+        self._depth = DepthMap(self.output_path)
+
+        left_img = UMedia.get_image(self.media_path + "left_sample.png")
+        right_img = UMedia.get_image(self.media_path + "right_sample.png")
+
+        disparity_map = self._depth.compute(left_img, right_img)
+        self._depth.save_point_cloud(disparity_map)

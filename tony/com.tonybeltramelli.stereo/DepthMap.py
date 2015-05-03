@@ -55,13 +55,22 @@ class DepthMap:
 
         return result
 
-    def save_point_cloud(self, disparity, disparity_to_depth_matrix):
+    def save_point_cloud(self, disparity, disparity_to_depth_matrix=None):
+        if disparity_to_depth_matrix is None:
+            height, width, layers = self._left_img.shape
+            disparity_to_depth_matrix = np.float32([[1, 0, 0, -0.5 * width],
+                                                    [0, -1, 0, 0.5 * height],
+                                                    [0, 0, 0, - 0.8 * width],
+                                                    [0, 0, 1, 0]])
+
         points = cv2.reprojectImageTo3D(disparity, disparity_to_depth_matrix)
+        colors = cv2.cvtColor(self._left_img, cv2.COLOR_BGR2RGB)
 
         mask = disparity > disparity.min()
         points = points[mask].reshape(-1, 3)
+        colors = colors[mask].reshape(-1, 3)
 
-        points = map(self.get_color, points)
+        points = np.hstack([points, colors])
 
         with open(self._output_path + "/point_cloud.ply", "w") as filename:
             ply_header = '''ply
@@ -70,20 +79,13 @@ element vertex %(num)d
 property float x
 property float y
 property float z
-property int r
-property int g
-property int b
+property uchar red
+property uchar green
+property uchar blue
 end_header
 '''
             filename.write(ply_header % dict(num=len(points)))
-            np.savetxt(filename, points, "%f %f %f %i %i %i", newline="\n")
-
-    def get_color(self, p):
-        r = 100
-        g = 100
-        b = 100
-
-        return [p[0], p[1], p[2], r, g, b]
+            np.savetxt(filename, points, "%f %f %f %d %d %d", newline="\n")
 
     def show_setting_window(self):
         cv2.namedWindow("DepthMap", cv2.WINDOW_AUTOSIZE)
