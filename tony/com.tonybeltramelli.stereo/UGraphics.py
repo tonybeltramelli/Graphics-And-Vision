@@ -39,3 +39,7 @@ class UGraphics(object):
             image[height:height * 2, :width] = right_img
 
         return image
+
+    @staticmethod
+    def get_resized_image(img, ratio):
+        return cv2.resize(img, (0, 0), fx=ratio, fy=ratio)

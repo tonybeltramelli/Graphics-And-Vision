@@ -79,12 +79,3 @@ class StereoVision:
         disparity_map = self._depth.compute(left_img, right_img)
 
         self._depth.save_point_cloud(disparity_map, self._calibrator.disparity_to_depth_matrix)
-
-    def disparity(self):
-        self._depth = DepthMap(self.output_path)
-
-        left_img = UMedia.get_image(self.media_path + "left_sample.png")
-        right_img = UMedia.get_image(self.media_path + "right_sample.png")
-
-        disparity_map = self._depth.compute(left_img, right_img)
-        self._depth.save_point_cloud(disparity_map)
