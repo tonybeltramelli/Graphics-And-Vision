@@ -15,8 +15,8 @@ class EpipolarGeometry:
     is_ready = False
 
     def __init__(self, img, define_manually=True):
-        self._img = img
-        self._raw_img = copy(self._img)
+        self._img = copy(img)
+        self._raw_img = img
 
         if define_manually:
             left_points, right_points = self.get_manually_selected_features()
@@ -25,12 +25,15 @@ class EpipolarGeometry:
 
             self.show_lines(left_points, right_points, fundamental_matrix)
 
-    def show_lines(self, left_points, right_points, fundamental_matrix):
+    def show_lines(self, left_points, right_points, fundamental_matrix, return_result=False):
         self.build_epipolar_lines(left_points, fundamental_matrix, False)
         self.build_epipolar_lines(right_points, fundamental_matrix, True)
 
-        UMedia.show(self._raw_img)
-        UInteractive.pause()
+        if not return_result:
+            UMedia.show(self._raw_img)
+            UInteractive.pause()
+        else:
+            return self._raw_img
 
     def get_manually_selected_features(self):
         UMedia.show(self._img)
