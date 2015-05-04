@@ -90,76 +90,56 @@ class Augmented(object):
 
         points = points.reshape(4,2)
         H, _ = cv2.findHomography(srcPts, points)
-        # H, _ = cv2.findHomography(points, srcPts)
-        # H2, _ = cv2.findHomography(srcPts, points)
-        # H, _ = cv2.findHomography(points, srcPts)
-
-        print points
-        print "----"
-        print srcPts
-
-
-        # cv2.drawContours(blackMask, [p2],-1,(0,255,0),-3)
-
-        # print H
 
         # <033> Applies a perspective transformation to the texture mapping image.
         textureWarped = cv2.warpPerspective(textureMap, H, (w, h))
-
-        wFirst = 0.1
-        wSecond = 0.9
-        gamma = 9
-        M = cv2.addWeighted(image, wFirst, textureWarped, wSecond, gamma)
+        whiteMask = cv2.warpPerspective(whiteMask, H, (w, h))
 
 
-        cv2.imshow("testsetst", textureWarped)
+        # tw = cv2.cvtColor(textureWarped, cv2.COLOR_BGR2GRAY)
+        # blackMask = cv2.cvtColor(blackMask, cv2.COLOR_GRAY2BGR)
+        # whiteMask = cv2.cvtColor(whiteMask, cv2.COLOR_GRAY2BGR)
+        tw = textureWarped
+        bin = cv2.bitwise_or(blackMask, whiteMask)
+        # return tw, bin
 
-        # print textureWarped.shape
+        # bin = cv2.bitwise_or(blackMask, whiteMask)
 
-        # blackMask = np.zeros(image.shape[:2], dtype=np.uint8)
-        # whiteMask = np.ones(textureWarped.shape[:2], dtype=np.uint8) * 255
-        # whiteMask = cv2.resize(whiteMask, (w, h))
+        # ttw = cv2.bitwise_and(bin, tw)
 
+        # tmpImg = cv2.bitwise_or(image, cv2.cvtColor(ttw, cv2.COLOR_GRAY2BGR))
 
+        # tmpImg = cv2.bitwise_or(image, tw)
+        # tmpImg = cv2.bitwise_or(image, tw, mask = bin)
+        # tmpImg2 = cv2.bitwise_or(tw, tmpImg)
 
-        # print whiteMask
-
-        # cv2.imshow("Whitemask", whiteMask)
-        # cv2.imshow("blackMask", blackMask)
-
-        # print blackMask.shape
-        #
-        # print whiteMask.shape
-
-        # tmp = cv2.bitwise_and(blackMask, whiteMask)
-        # cv2.imshow("bit and", tmp)
+        bin2 = cv2.bitwise_not(bin)
 
 
+        tmpImg = cv2.bitwise_and(image, cv2.cvtColor(bin2, cv2.COLOR_GRAY2BGR))
 
-        # cv2 . resize ( newbackGround , (h , w ) )
+        return tw, bin
 
+        # return tmpImg, tw,
 
-        # mask = np.zeros(image.shape[:2], dtype = "uint8")
-        # (cX, cY) = (image.shape[1] / 2, image.shape[0] / 2)
-        # cv2.rectangle(mask, (cX - 75, cY - 75), (cX + 75, cY + 75), 255, -1)
-        # cv2.imshow("mask", mask)
-
-        # <034> Create a mask from the cube face using the texture mapping image.
-        # blackMask = np.zeros(image.shape[:2], dtype=np.uint8)
-        # whiteMask = np.ones(textureMap.shape[:2], dtype=np.uint8) * 255
-        #
-        # print blackMask.shape
-        # print whiteMask.shape
-        #
-        # for i in range(whiteMask.shape[0]):
-        #     for j in range(whiteMask.shape[1]):
-        #         blackMask[i][j] = whiteMask[i][j]
+        # tmpImg2 = cv2.bitwise_or(tmpImg, tw)
 
 
-        # cv2.bitwise_and(blackMask, whiteMask)
 
         # cv2.imshow("whiteMask", whiteMask)
         # cv2.imshow("blackMask", blackMask)
+
+        # cv2.imshow("tw", tw)
+        # cv2.imshow("ttw", ttw)
+        # cv2.imshow("bin", bin)
+
+        # cv2.imshow("Masked", tmpImg)
+        # cv2.imshow("Final", tmpImg2)
+
+
+
+        # <034> Create a mask from the cube face using the texture mapping image.
+        # return tw
 
 
 

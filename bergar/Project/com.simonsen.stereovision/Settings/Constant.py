@@ -1,5 +1,9 @@
 __author__ = 'bs'
 
+# Debugging parameters
+WRITE_LEFT_IMAGE        = False
+WRITE_LOCATION          = "/home/bs/Desktop/out.jpg"
+
 # Input video
 INPUT_VIDEOS            = '/home/bs/itu/graphics_and_image_analysis_SIGB/code/Stereo-Vision-System/bergar/Videos/'
 VIDEO_LEFT_1            = INPUT_VIDEOS + "cameraLeft.mov"

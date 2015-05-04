@@ -180,6 +180,8 @@ end_header
                 # leftImage, rightImage = StereoCameras.Instance.Retrieve()
                 # TODO: Uncomment
 
+                # leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_4, 55) # Fail to find chessboard pattern
+
                 leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_4, 30)
                 rightImage = Utils.get_frame_from_video(C.VIDEO_RIGHT_4, 30)
 
@@ -204,7 +206,7 @@ end_header
                     if self.IsDrawing:
                         print "Start drawing"
                         if leftCorners is not None and rightCorners is not None:
-                            self.__Augmentation(leftCorners,  leftImage)
+                            leftImage = self.__Augmentation(leftCorners,  leftImage)
                             # self.__Augmentation(rightCorners, rightImage, CameraEnum.RIGHT)
                             # TODO: Uncomment or delete
                         print "Done drawing"
@@ -508,6 +510,8 @@ end_header
         if camera == CameraEnum.RIGHT:
             return
 
+        self.writeImage(image)
+
         # Define each correspoding cube face.
         cube = Configuration.Instance.Augmented.Cube
         TopFace   = cube[4:]
@@ -519,27 +523,125 @@ end_header
         # Threshould used for selecting which cube faces will be drawn.
         threshold = 88
 
-        uf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, UpFace, cameraMatrix, distCoeffs)
-        rf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, RightFace, cameraMatrix, distCoeffs)
-        tf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, TopFace, cameraMatrix, distCoeffs)
-        lf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, LeftFace, cameraMatrix, distCoeffs)
-        df = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, DownFace, cameraMatrix, distCoeffs)
+        # angles = []
+        # normal, center, angle = Configuration.Instance.Augmented.GetFaceNormal(UpFace)
+        # print "------ UP ------"
+        # print normal
+        # print center
+        # print angle[0]
+        # print "----------------"
+        # normal, center, angle = Configuration.Instance.Augmented.GetFaceNormal(RightFace)
+        # print "------ RIGHT ------"
+        # print normal
+        # print center
+        # print angle[0]
+        # print "----------------"
+        # normal, center, angle = Configuration.Instance.Augmented.GetFaceNormal(TopFace)
+        # print "------ TOP ------"
+        # print normal
+        # print center
+        # print angle[0]
+        # print "----------------"
+        # normal, center, angle = Configuration.Instance.Augmented.GetFaceNormal(LeftFace)
+        # print "------ LEFT ------"
+        # print normal
+        # print center
+        # print angle[0]
+        # print "----------------"
+        # normal, center, angle = Configuration.Instance.Augmented.GetFaceNormal(DownFace)
+        # print "------ DOWN ------"
+        # print normal
+        # print center
+        # print angle[0]
+        # print "----------------"
 
-        # print "oooooooooooooooooooooooooooooooooooooooo"
-        # print uf.shape
-        # print uf
-        # print "oooooooooooooooooooooooooooooooooooooooo"
-        # print UpFace.shape
-        # print UpFace
-        # print "oooooooooooooooooooooooooooooooooooooooo"
+        # for a in angles:
+        #     print a
+
+        textures = []
+        image2 = image
+
+        t1, b1, d1 = self.calculateTexture(TopFace, objectPoints, corners, cameraMatrix, distCoeffs, image, C.TEXTURE_TOP, threshold)
+        t2, b2, d2 = self.calculateTexture(UpFace, objectPoints, corners, cameraMatrix, distCoeffs, image, C.TEXTURE_UP, threshold)
+        t3, b3, d3 = self.calculateTexture(RightFace, objectPoints, corners, cameraMatrix, distCoeffs, image, C.TEXTURE_RIGHT, threshold)
+        t4, b4, d4 = self.calculateTexture(LeftFace, objectPoints, corners, cameraMatrix, distCoeffs, image, C.TEXTURE_LEFT, threshold)
+        t5, b5, d5 = self.calculateTexture(DownFace, objectPoints, corners, cameraMatrix, distCoeffs, image, C.TEXTURE_DOWN, threshold)
+
+        # uf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, UpFace, cameraMatrix, distCoeffs)
+        # rf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, RightFace, cameraMatrix, distCoeffs)
+        # tf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, TopFace, cameraMatrix, distCoeffs)
+        # lf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, LeftFace, cameraMatrix, distCoeffs)
+        # df = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, DownFace, cameraMatrix, distCoeffs)
+
+
 
         # <035> Applies the texture mapping over all cube sides.
-        # Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_UP, uf)
-        # Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_RIGHT, rf)
-        # Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_UP, UpFace)
-        Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_TOP, tf)
-        # Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_LEFT, lf)
-        # Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_DOWN, df)
+        # Get / calculate the texture for all sides of the cube
+
+        # t1, b1 = Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_TOP, tf)
+        # t2, b2 = Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_UP, uf)
+        # t3, b3 = Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_RIGHT, rf)
+        # t4, b4 = Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_LEFT, lf)
+        # t5, b5 = Configuration.Instance.Augmented.ApplyTexture(image, C.TEXTURE_DOWN, df)
+
+
+
+        if d1: textures.append((t1, b1))
+        if d2: textures.append((t2, b2))
+        if d3: textures.append((t3, b3))
+        if d4: textures.append((t4, b4))
+        if d5: textures.append((t5, b5))
+
+        # Apply texture to cube
+        for t in textures:
+            bin = bitwise_not(t[1])
+            tmpImg = cv2.bitwise_and(image2, cv2.cvtColor(bin, cv2.COLOR_GRAY2BGR))
+            image2 = cv2.bitwise_or(tmpImg, t[0])
+
+        return image2
+
+
+
+
+        # bin2 = cv2.bitwise_not(b1)
+        # tmpImg = cv2.bitwise_and(image, cv2.cvtColor(bin2, cv2.COLOR_GRAY2BGR))
+        # image2 = cv2.bitwise_or(tmpImg, t1)
+        #
+        # bin3 = cv2.bitwise_not(b2)
+        # tmpImg = cv2.bitwise_and(image2, cv2.cvtColor(bin3, cv2.COLOR_GRAY2BGR))
+        # image3 = cv2.bitwise_or(tmpImg, t2)
+
+        # image2 = cv2.bitwise_or(i1, t1)
+        # image3 = cv2.bitwise_or(i2, t2)
+        # cv2.imshow("Cube with texture", image2)
+        # cv2.imshow("test2", image3)
+        # image4 = cv2.add(image2, image3)
+        # cv2.imshow("combinedTexture", image4)
+
+
+        # for i in range(len(textures)):
+        #     image2 = cv2.bitwise_or(image2, textures[i])
+            # s = "texture_"
+            # s = s + str(i)
+            # cv2.imshow(s, textures[i])
+        # cv2.imshow("image2", image2)
+
+    def calculateTexture(self, cubeFace, objectPoints, corners, cameraMatrix, distCoeffs, image, texture, threshold):
+        # Calculate normal vector of cube face to determine if it should be drawn
+        normal, center, angle = Configuration.Instance.Augmented.GetFaceNormal(cubeFace)
+        draw = angle[0] < threshold
+        if draw:
+            cf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, cubeFace, cameraMatrix, distCoeffs)
+            t, b = Configuration.Instance.Augmented.ApplyTexture(image, texture, cf)
+        else:
+            t = 0
+            b = 0
+        return t, b, draw
+
+
+    def writeImage(self, image):
+        if C.WRITE_LEFT_IMAGE:
+            cv2.imwrite(C.WRITE_LOCATION, image)
 
 
     def draw(self, img, corners, imgpts):
