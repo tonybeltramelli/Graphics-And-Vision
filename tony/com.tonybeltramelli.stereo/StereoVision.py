@@ -43,6 +43,7 @@ class StereoVision:
             self.show_depth_map(left_img, right_img)
 
     def stereo_vision_from_video(self, left_video_path, right_video_path):
+        cv2.destroyAllWindows()
         UMedia.load_videos([self.media_path + left_video_path, self.media_path + right_video_path], self.process)
 
     def process(self, images):

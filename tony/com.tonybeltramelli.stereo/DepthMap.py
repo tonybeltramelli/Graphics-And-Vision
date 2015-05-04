@@ -20,8 +20,8 @@ class DepthMap:
         self._output_path = output_path
 
     def compute(self, left_img, right_img):
-        self._left_img = left_img
-        self._right_img = right_img
+        self._left_img = UGraphics.get_resized_image(left_img, 0.5)
+        self._right_img = UGraphics.get_resized_image(right_img, 0.5)
 
         self.show_setting_window()
         self.update()
