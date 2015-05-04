@@ -3,7 +3,7 @@ __author__ = 'tbeltramelli'
 from UInteractive import *
 from UMath import *
 from Filtering import *
-
+from UGraphics import *
 
 class DepthMap:
     _output_path = None
@@ -11,8 +11,8 @@ class DepthMap:
     _left_img = None
     _right_img = None
 
-    _min_disparity = 0
-    _block_size = 1
+    _min_disparity = -16
+    _block_size = 5
 
     _disparity_map = None
 
@@ -35,26 +35,18 @@ class DepthMap:
         UMedia.show(self._disparity_map)
 
     def get_disparity_map(self, min_disparity=0, block_size=1):
-        sgbm = cv2.StereoSGBM_create(min_disparity, min_disparity + 16, block_size,
-                                     P1=8*3*block_size**2, P2=32*3*block_size**2,
-                                     disp12MaxDiff=1, preFilterCap=63,
-                                     uniquenessRatio=10, speckleWindowSize=100,
-                                     speckleRange=32, mode=cv2.STEREO_SGBM_MODE_HH)
+        print min_disparity, block_size
+
+        sgbm = cv2.StereoSGBM_create(minDisparity=min_disparity, numDisparities=192, blockSize=block_size,
+                                     P1=600, P2=2400,
+                                     disp12MaxDiff=10, preFilterCap=4,
+                                     uniquenessRatio=1, speckleWindowSize=150,
+                                     speckleRange=2, mode=cv2.STEREO_SGBM_MODE_HH)
 
         disparity = sgbm.compute(Filtering.get_gray_scale_image(self._left_img), Filtering.get_gray_scale_image(self._right_img))
+        disparity = cv2.normalize(disparity, disparity, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
 
-        min_val = np.min(np.min(disparity, axis=1), axis=0)
-        max_val = np.max(np.max(disparity, axis=1), axis=0)
-
-        height, width = disparity.shape
-        result = np.zeros((height, width), np.uint8)
-
-        for y in range(height):
-            for x in range(width):
-                value = UMath.normalize(0, 255, disparity[y][x], min_val, max_val)
-                result[y][x] = value
-
-        return result
+        return disparity
 
     def save_point_cloud(self, disparity, disparity_to_depth_matrix=None):
         if disparity_to_depth_matrix is None:
@@ -90,12 +82,12 @@ end_header
 
     def show_setting_window(self):
         cv2.namedWindow("DepthMap", cv2.WINDOW_AUTOSIZE)
-        cv2.createTrackbar("min disparity", "DepthMap", 1, 32, self.update_min_disparity)
-        cv2.createTrackbar("block size", "DepthMap", 1, 5, self.update_block_size)
+        cv2.createTrackbar("min disparity", "DepthMap", 0, 128, self.update_min_disparity)
+        cv2.createTrackbar("block size", "DepthMap", 5, 25, self.update_block_size)
 
     def update_min_disparity(self, value):
         if value % 16 == 0:
-            self._min_disparity = value
+            self._min_disparity = value - 64
             self.update()
 
     def update_block_size(self, value):

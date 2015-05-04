@@ -43,3 +43,11 @@ class UGraphics(object):
     @staticmethod
     def get_resized_image(img, ratio):
         return cv2.resize(img, (0, 0), fx=ratio, fy=ratio)
+
+    @staticmethod
+    def get_resized_image_from_width(img, new_width):
+        height, width = img.shape[:2]
+        ratio = float(width) / float(height)
+        new_height = int(new_width / ratio)
+
+        return cv2.resize(img, (new_width, new_height))
