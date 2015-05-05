@@ -19,9 +19,9 @@ class DepthMap:
     def __init__(self, output_path):
         self._output_path = output_path
 
-    def compute(self, left_img, right_img):
-        self._left_img = UGraphics.get_resized_image(left_img, 0.5)
-        self._right_img = UGraphics.get_resized_image(right_img, 0.5)
+    def compute(self, left_img, right_img, to_resize=False):
+        self._left_img = left_img if not to_resize else UGraphics.get_resized_image(left_img, 0.5)
+        self._right_img = right_img if not to_resize else UGraphics.get_resized_image(right_img, 0.5)
 
         self.show_setting_window()
         self.update()
@@ -34,7 +34,7 @@ class DepthMap:
 
         UMedia.show(self._disparity_map)
 
-    def get_disparity_map(self, min_disparity=0, block_size=1):
+    def get_disparity_map(self, min_disparity=0, block_size=1, to_equalize=False):
         print min_disparity, block_size
 
         sgbm = cv2.StereoSGBM_create(minDisparity=min_disparity, numDisparities=192, blockSize=block_size,
@@ -43,7 +43,14 @@ class DepthMap:
                                      uniquenessRatio=1, speckleWindowSize=150,
                                      speckleRange=2, mode=cv2.STEREO_SGBM_MODE_HH)
 
-        disparity = sgbm.compute(Filtering.get_gray_scale_image(self._left_img), Filtering.get_gray_scale_image(self._right_img))
+        left_img = Filtering.get_gray_scale_image(self._left_img)
+        right_img = Filtering.get_gray_scale_image(self._right_img)
+
+        if to_equalize:
+            left_img = cv2.equalizeHist(left_img, left_img)
+            right_img = cv2.equalizeHist(right_img, right_img)
+
+        disparity = sgbm.compute(left_img, right_img)
         disparity = cv2.normalize(disparity, disparity, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
 
         return disparity
