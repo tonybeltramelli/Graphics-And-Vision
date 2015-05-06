@@ -242,19 +242,45 @@ class Augmented(object):
         alpha = 100
 
         faceNormal, center, angle = self.GetFaceNormal(points)
+        cameraCenter = -np.dot(self.__rotation.T, self.__translation).T
+
+        viewVector = cameraCenter - center
+        viewVector = viewVector / np.linalg.norm(viewVector)
 
         # read light position from global (mouse callback) if set
-        # if self.__LightSource == None:
-        #     lightPos = center
-        #     self.__lightSource = lightPos
-        # else:
-        #     lightPos = self.__LightSource
+        if self.__LightSource == None:
+            lightPos = cameraCenter
+            self.__lightSource = lightPos
+        else:
+            lightPos = self.__LightSource
 
-        # unitary vector from the camera to the face center
-        viewVector = faceNormal
+        lightIncidenceVector = lightPos - center
+        lightIncidenceVector = lightIncidenceVector / np.linalg.norm(lightIncidenceVector)
+        lightIncidenceVector = lightIncidenceVector.reshape((3,))
+        viewVector = viewVector.reshape((3,))
 
-        # unitary vector from the light source to the face center
-        lightIncidenceVector = faceNormal
+        # print "-------------------------------------"
+        # print lightIncidenceVector.shape
+        # print "-------------------------------------"
+        # print faceNormal.shape
+
+        ###########################################################################################33
+        #         # unitary vector from the camera to the face center
+        # # viewVector = camCenter - faceCenter
+        # # viewVector = viewVector / np.linalg.norm(viewVector)
+        # viewVector = faceNormal
+        #
+        # # unitary vector from the light source to the face center
+        # # lightIncidenceVector = lightPos - faceCenter
+        # # lightIncidenceVector = lightIncidenceVector / np.linalg.norm(lightIncidenceVector)
+        # lightIncidenceVector = faceNormal
+        ###########################################################################################33
+
+        # unitary vector from the camera to the face center !!
+        # viewVector = faceNormal
+
+        # unitary vector from the light source to the face center !!
+        # lightIncidenceVector = faceNormal
 
         # face reflection vector
         lightReflectionVector = 2 * np.dot(lightIncidenceVector, faceNormal) * faceNormal - lightIncidenceVector

@@ -184,16 +184,15 @@ end_header
 
                 # leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_4, 30)
                 # rightImage = Utils.get_frame_from_video(C.VIDEO_RIGHT_4, 30)
-                #
                 # leftImage = cv2.imread(C.II_1)
                 # rightImage = cv2.imread(C.II_1)
 
 
                 # Find the pattern in the image.
-                # leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage,  not self.IsDrawing)
-                # rightCorners = Configuration.Instance.Pattern.FindCorners(rightImage, not self.IsDrawing)
-                leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage)
-                rightCorners = Configuration.Instance.Pattern.FindCorners(rightImage)
+                leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage,  not self.IsDrawing)
+                rightCorners = Configuration.Instance.Pattern.FindCorners(rightImage, not self.IsDrawing)
+                # leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage)
+                # rightCorners = Configuration.Instance.Pattern.FindCorners(rightImage)
 
                 # Check if the calibration process is running.
                 if self.IsCalibrating:
@@ -529,14 +528,22 @@ end_header
         textures = []
         image2 = image
 
+        # Calculate normals for all corners. Used in shading
+        top, right, left, up, down = Configuration.Instance.Augmented.CalculateFaceCornerNormals(TopFace, RightFace, LeftFace, UpFace, DownFace)
+
+        cubeFaces = []
+        cubeFaces.append((TopFace, top))
+        cubeFaces.append((UpFace, up))
+        cubeFaces.append((DownFace, down))
+        cubeFaces.append((LeftFace, left))
+        cubeFaces.append((RightFace, right))
+
         t1, b1, d1 = self.calculateTexture(TopFace, objectPoints, corners, cameraMatrix, distCoeffs, image, C.TEXTURE_TOP, threshold)
         t2, b2, d2 = self.calculateTexture(UpFace, objectPoints, corners, cameraMatrix, distCoeffs, image, C.TEXTURE_UP, threshold)
         t3, b3, d3 = self.calculateTexture(RightFace, objectPoints, corners, cameraMatrix, distCoeffs, image, C.TEXTURE_RIGHT, threshold)
         t4, b4, d4 = self.calculateTexture(LeftFace, objectPoints, corners, cameraMatrix, distCoeffs, image, C.TEXTURE_LEFT, threshold)
         t5, b5, d5 = self.calculateTexture(DownFace, objectPoints, corners, cameraMatrix, distCoeffs, image, C.TEXTURE_DOWN, threshold)
 
-        # Calculate normals for all corners. Used in shading
-        top, right, left, up, down = Configuration.Instance.Augmented.CalculateFaceCornerNormals(TopFace, RightFace, LeftFace, UpFace, DownFace)
 
         # <035> Applies the texture mapping over all cube sides.
         # Get / calculate the texture for all sides of the cube
@@ -552,22 +559,34 @@ end_header
             tmpImg = cv2.bitwise_and(image2, cv2.cvtColor(bin, cv2.COLOR_GRAY2BGR))
             image2 = cv2.bitwise_or(tmpImg, t[0])
 
+        for f in cubeFaces:
+            self.applyShading(image2, f[0], f[1], corners, threshold, objectPoints, cameraMatrix, distCoeffs)
+
+
         self.writeImage(image2)
 
         # Apply the shading
-        tf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, TopFace, cameraMatrix, distCoeffs)
-        rf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, RightFace, cameraMatrix, distCoeffs)
-        lf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, LeftFace, cameraMatrix, distCoeffs)
-        uf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, UpFace, cameraMatrix, distCoeffs)
-        df = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, DownFace, cameraMatrix, distCoeffs)
-
-        Configuration.Instance.Augmented.ShadeFace(image2, TopFace, top, tf, corners)
+        # tf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, TopFace, cameraMatrix, distCoeffs)
+        # rf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, RightFace, cameraMatrix, distCoeffs)
+        # lf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, LeftFace, cameraMatrix, distCoeffs)
+        # uf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, UpFace, cameraMatrix, distCoeffs)
+        # df = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, DownFace, cameraMatrix, distCoeffs)
+        #
+        # Configuration.Instance.Augmented.ShadeFace(image2, TopFace, top, tf, corners)
         # Configuration.Instance.Augmented.ShadeFace(image2, RightFace, right, rf, corners)
         # Configuration.Instance.Augmented.ShadeFace(image2, LeftFace, left, lf, corners)
         # Configuration.Instance.Augmented.ShadeFace(image2, UpFace, up, uf, corners)
         # Configuration.Instance.Augmented.ShadeFace(image2, DownFace, down, df, corners)
 
         return image2
+
+    def applyShading(self, image, cubeFace, shadeFace, corners, threshold, objectPoints, cameraMatrix, distCoeffs):
+        normal, center, angle = Configuration.Instance.Augmented.GetFaceNormal(cubeFace)
+        draw = angle[0] < threshold
+        if draw:
+            cf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, cubeFace, cameraMatrix, distCoeffs)
+            Configuration.Instance.Augmented.ShadeFace(image, cubeFace, shadeFace, cf, corners)
+
 
     def calculateTexture(self, cubeFace, objectPoints, corners, cameraMatrix, distCoeffs, image, texture, threshold):
         # Calculate normal vector of cube face to determine if it should be drawn
