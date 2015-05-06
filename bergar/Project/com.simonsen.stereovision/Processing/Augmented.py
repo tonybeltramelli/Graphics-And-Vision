@@ -20,6 +20,8 @@ __version__ = '$Revision: 2015041801 $'
 import cv2
 import numpy as np
 import math
+import Configuration
+from Cameras.StereoCameras      import StereoCameras
 
 ########################################################################
 class Augmented(object):
@@ -37,6 +39,10 @@ class Augmented(object):
     def CoordinateSystem(self):
         """Get an augmented coordinate system."""
         return self.__coordinateSystem
+
+    @property
+    def __LightSource(self):
+        return self.__lightSource
 
     #----------------------------------------------------------------------#
     #                      Augmented Class Constructor                     #
@@ -89,6 +95,14 @@ class Augmented(object):
 
 
         points = points.reshape(4,2)
+
+        # print "appText:"
+        # print "----------------------------"
+        # print srcPts
+        # print "----------------------------"
+        # print points
+        # print "----------------------------"
+
         H, _ = cv2.findHomography(srcPts, points)
 
         # <033> Applies a perspective transformation to the texture mapping image.
@@ -143,13 +157,43 @@ class Augmented(object):
 
 
 
-    def ShadeFace(self, image, points, normals, projections):
+    def ShadeFace(self, image, points, normals, projections, corners):
         shadeRes = 10
         h, w = image.shape[:2]
 
         square = np.array([[0, 0], [shadeRes-1, 0], [shadeRes-1, shadeRes-1], [0, shadeRes-1]])
 
-        H, _ = cv2.findHomography(square, projections)
+        # tf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, TopFace, cameraMatrix, distCoeffs)
+        objectPoints = Configuration.Configuration.Instance.Pattern.CalculatePattern()
+        #
+        # # <021> Prepares the external parameters.
+        # if camera == CameraEnum.LEFT:
+        cameraMatrix = StereoCameras.Instance.Parameters.CameraMatrix1
+        distCoeffs = StereoCameras.Instance.Parameters.DistCoeffs1
+
+        p = Configuration.Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, points, cameraMatrix, distCoeffs)
+
+        # print normals
+        # print "------------------------"
+        # print points
+        # print "------------------------"
+        # print square
+        # print "------------------------"
+        # print projections
+
+        # p = np.delete(points, 2, 1)
+        square = square.astype(float)
+        p = p.reshape((4,2))
+        p = p.astype(float)
+        projections = projections.reshape((4,2))
+
+        # print "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        # print p.shape
+        # print square.shape
+        # print "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+        # H, _ = cv2.findHomography(square, projections)
+        H, _ = cv2.findHomography(square, p)
         Mr0,Mg0,Mb0= self.__CalculateShadeMatrix(image, shadeRes, points, normals)
 
         Mr = cv2.warpPerspective(Mr0, H, (w, h),flags=cv2.INTER_LINEAR)
@@ -177,7 +221,62 @@ class Augmented(object):
         image=cv2.cvtColor(image2, cv2.COLOR_RGB2BGR, image)
 
     def __CalculateShadeMatrix(self, image, size, points, normals):
-        pass
+        # create the empty lighting texture
+        shade = np.zeros((size, size, 3))
+
+        # Ambient Light
+        IA = np.array([5.0, 5.0, 5.0])
+
+        # Point Light
+        IP = np.array([5.0, 5.0, 5.0])
+
+        # attenuation
+        fatt = 1
+
+        # Material
+        ka = np.array([0.2, 0.2, 0.2])  # ambient
+        kd = np.array([0.3, 0.3, 0.3])  # diffuse
+        ks = np.array([0.7, 0.7, 0.7])  # specular
+
+        # used for specular
+        alpha = 100
+
+        faceNormal, center, angle = self.GetFaceNormal(points)
+
+        # read light position from global (mouse callback) if set
+        # if self.__LightSource == None:
+        #     lightPos = center
+        #     self.__lightSource = lightPos
+        # else:
+        #     lightPos = self.__LightSource
+
+        # unitary vector from the camera to the face center
+        viewVector = faceNormal
+
+        # unitary vector from the light source to the face center
+        lightIncidenceVector = faceNormal
+
+        # face reflection vector
+        lightReflectionVector = 2 * np.dot(lightIncidenceVector, faceNormal) * faceNormal - lightIncidenceVector
+
+        # Phong shading, now we need to iterate through all of the points in the shade texture
+        for y, row in enumerate(shade):
+            for x, value in enumerate(row):
+                interpolatedFaceNormal = self.__BilinearInterpolation(size, x, y, normals, True)
+                interpolatedFaceNormal = np.array(interpolatedFaceNormal)
+
+                # light
+                light = max(np.dot(interpolatedFaceNormal, lightIncidenceVector), 0)
+
+                # specular
+                lightReflectionVector = 2 * np.dot(lightIncidenceVector, interpolatedFaceNormal) * interpolatedFaceNormal - lightIncidenceVector
+                spec = pow(max(0, np.dot(lightReflectionVector, viewVector)), alpha)
+
+                # put it all together
+                shade[y][x] = IA * ka + IP * kd * light + IP * ks * spec
+
+        # return by channel
+        return shade[:, :, 0], shade[:, :, 1], shade[:, :, 2]
 
     def GetFaceNormal(self, points):
         """Get some information of a correspoding cube face."""
@@ -251,6 +350,8 @@ class Augmented(object):
                                   [3, 1, -3], [3, 4, -3], [6, 4, -3], [6, 1, -3]])
         # Creates the coordinate system.
         self.__coordinateSystem = np.float32([[2, 0, 0], [0, 2, 0], [0, 0, -2]]).reshape(-1, 3)
+
+        self.__lightSource = None
 
     def __BilinearInterpolation(self, size, i, j, points, isNormalized):
         x1 = 0
