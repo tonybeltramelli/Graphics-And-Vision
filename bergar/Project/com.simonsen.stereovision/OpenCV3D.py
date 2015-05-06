@@ -177,17 +177,23 @@ end_header
                 StereoCameras.Instance.Grab()
                 # Decodes and returns the grabbed video frames.
 
-                # leftImage, rightImage = StereoCameras.Instance.Retrieve()
+                leftImage, rightImage = StereoCameras.Instance.Retrieve()
                 # TODO: Uncomment
 
                 # leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_4, 55) # Fail to find chessboard pattern
 
-                leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_4, 30)
-                rightImage = Utils.get_frame_from_video(C.VIDEO_RIGHT_4, 30)
+                # leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_4, 30)
+                # rightImage = Utils.get_frame_from_video(C.VIDEO_RIGHT_4, 30)
+                #
+                # leftImage = cv2.imread(C.II_1)
+                # rightImage = cv2.imread(C.II_1)
+
 
                 # Find the pattern in the image.
-                leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage,  not self.IsDrawing)
-                rightCorners = Configuration.Instance.Pattern.FindCorners(rightImage, not self.IsDrawing)
+                # leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage,  not self.IsDrawing)
+                # rightCorners = Configuration.Instance.Pattern.FindCorners(rightImage, not self.IsDrawing)
+                leftCorners  = Configuration.Instance.Pattern.FindCorners(leftImage)
+                rightCorners = Configuration.Instance.Pattern.FindCorners(rightImage)
 
                 # Check if the calibration process is running.
                 if self.IsCalibrating:

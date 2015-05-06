@@ -110,7 +110,9 @@ class Pattern(object):
         gray = image.copy()
 
         # Finds the positions of internal corners of the chessboard.
-        flags = cv2.CALIB_CB_ADAPTIVE_THRESH | cv2.CALIB_CB_NORMALIZE_IMAGE | cv2.CALIB_CB_FAST_CHECK
+        # flags = cv2.CALIB_CB_ADAPTIVE_THRESH | cv2.CALIB_CB_NORMALIZE_IMAGE | cv2.CALIB_CB_FAST_CHECK
+        # TODO: Change flags back ?
+        flags = cv2.CALIB_CB_FAST_CHECK
         retval, corners = cv2.findChessboardCorners(gray, self.Size, flags=flags)
 
         if retval:

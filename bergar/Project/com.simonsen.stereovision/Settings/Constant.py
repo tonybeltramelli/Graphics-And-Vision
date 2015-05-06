@@ -23,3 +23,15 @@ TEXTURE_LEFT            = TEXTURE_IMAGES + "Left.jpg"
 TEXTURE_RIGHT           = TEXTURE_IMAGES + "Right.jpg"
 TEXTURE_TOP             = TEXTURE_IMAGES + "Top.jpg"
 
+# Input images (for testing instead of video)
+INPUT_IMAGES            = '/home/bs/itu/graphics_and_image_analysis_SIGB/code/Stereo-Vision-System/bergar/Project/InputImages/'
+II_1                    = INPUT_IMAGES + "l113.jpg"
+II_2                    = INPUT_IMAGES + "l25.jpg"
+II_3                    = INPUT_IMAGES + "l37.jpg"
+II_4                    = INPUT_IMAGES + "l74.jpg"
+II_5                    = INPUT_IMAGES + "l80.jpg"
+II_6                    = INPUT_IMAGES + "r25.jpg"
+II_7                    = INPUT_IMAGES + "r37.jpg"
+II_8                    = INPUT_IMAGES + "r74.jpg"
+II_9                    = INPUT_IMAGES + "r80.jpg"
+
