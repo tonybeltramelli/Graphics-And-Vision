@@ -1,7 +1,7 @@
 __author__ = 'bs'
 
 # Debugging parameters
-WRITE_LEFT_IMAGE        = False
+WRITE_LEFT_IMAGE        = True
 WRITE_LOCATION          = "/home/bs/Desktop/out.jpg"
 
 # Input video

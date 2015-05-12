@@ -173,14 +173,6 @@ class Augmented(object):
 
         p = Configuration.Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, points, cameraMatrix, distCoeffs)
 
-        # print normals
-        # print "------------------------"
-        # print points
-        # print "------------------------"
-        # print square
-        # print "------------------------"
-        # print projections
-
         # p = np.delete(points, 2, 1)
         square = square.astype(float)
         p = p.reshape((4,2))
@@ -188,20 +180,20 @@ class Augmented(object):
         projections = projections.reshape((4,2))
 
         # print "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-        # print p.shape
-        # print square.shape
+        # print p
+        # print square
         # print "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
         # H, _ = cv2.findHomography(square, projections)
         H, _ = cv2.findHomography(square, p)
-        Mr0,Mg0,Mb0= self.__CalculateShadeMatrix(image, shadeRes, points, normals)
+        Mr0, Mg0, Mb0= self.__CalculateShadeMatrix(image, shadeRes, points, normals)
 
-        Mr = cv2.warpPerspective(Mr0, H, (w, h),flags=cv2.INTER_LINEAR)
-        Mg = cv2.warpPerspective(Mg0, H, (w, h),flags=cv2.INTER_LINEAR)
-        Mb = cv2.warpPerspective(Mb0, H, (w, h),flags=cv2.INTER_LINEAR)
+        Mr = cv2.warpPerspective(Mr0, H, (w, h), flags=cv2.INTER_LINEAR)
+        Mg = cv2.warpPerspective(Mg0, H, (w, h), flags=cv2.INTER_LINEAR)
+        Mb = cv2.warpPerspective(Mb0, H, (w, h), flags=cv2.INTER_LINEAR)
 
-        image2=cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        [r,g,b]=cv2.split(image2)
+        image2 = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        [r,g,b] = cv2.split(image2)
 
         whiteMask = np.copy(r)
         whiteMask[:,:]=[0]
@@ -230,10 +222,6 @@ class Augmented(object):
         # Point Light
         IP = np.array([5.0, 5.0, 5.0])
 
-        # attenuation
-        fatt = 1
-
-        # Material
         ka = np.array([0.2, 0.2, 0.2])  # ambient
         kd = np.array([0.3, 0.3, 0.3])  # diffuse
         ks = np.array([0.7, 0.7, 0.7])  # specular
@@ -259,33 +247,16 @@ class Augmented(object):
         lightIncidenceVector = lightIncidenceVector.reshape((3,))
         viewVector = viewVector.reshape((3,))
 
-        # print "-------------------------------------"
-        # print lightIncidenceVector.shape
-        # print "-------------------------------------"
-        # print faceNormal.shape
-
-        ###########################################################################################33
-        #         # unitary vector from the camera to the face center
-        # # viewVector = camCenter - faceCenter
-        # # viewVector = viewVector / np.linalg.norm(viewVector)
-        # viewVector = faceNormal
-        #
-        # # unitary vector from the light source to the face center
-        # # lightIncidenceVector = lightPos - faceCenter
-        # # lightIncidenceVector = lightIncidenceVector / np.linalg.norm(lightIncidenceVector)
-        # lightIncidenceVector = faceNormal
-        ###########################################################################################33
-
-        # unitary vector from the camera to the face center !!
-        # viewVector = faceNormal
-
-        # unitary vector from the light source to the face center !!
-        # lightIncidenceVector = faceNormal
+        print "----------------------------------"
+        print lightIncidenceVector
+        print "----------------------------------"
+        print center
+        print "----------------------------------"
+        print cameraCenter
 
         # face reflection vector
         lightReflectionVector = 2 * np.dot(lightIncidenceVector, faceNormal) * faceNormal - lightIncidenceVector
 
-        # Phong shading, now we need to iterate through all of the points in the shade texture
         for y, row in enumerate(shade):
             for x, value in enumerate(row):
                 interpolatedFaceNormal = self.__BilinearInterpolation(size, x, y, normals, True)
@@ -301,7 +272,7 @@ class Augmented(object):
                 # put it all together
                 shade[y][x] = IA * ka + IP * kd * light + IP * ks * spec
 
-        # return by channel
+        # return all three channels
         return shade[:, :, 0], shade[:, :, 1], shade[:, :, 2]
 
     def GetFaceNormal(self, points):

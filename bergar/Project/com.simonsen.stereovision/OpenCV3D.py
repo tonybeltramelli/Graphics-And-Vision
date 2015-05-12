@@ -177,15 +177,15 @@ end_header
                 StereoCameras.Instance.Grab()
                 # Decodes and returns the grabbed video frames.
 
-                leftImage, rightImage = StereoCameras.Instance.Retrieve()
+                # leftImage, rightImage = StereoCameras.Instance.Retrieve()
                 # TODO: Uncomment
 
                 # leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_4, 55) # Fail to find chessboard pattern
 
-                # leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_4, 30)
-                # rightImage = Utils.get_frame_from_video(C.VIDEO_RIGHT_4, 30)
-                # leftImage = cv2.imread(C.II_1)
-                # rightImage = cv2.imread(C.II_1)
+                leftImage = Utils.get_frame_from_video(C.VIDEO_LEFT_4, 30)
+                rightImage = Utils.get_frame_from_video(C.VIDEO_RIGHT_4, 30)
+                leftImage = cv2.imread(C.II_1)
+                rightImage = cv2.imread(C.II_1)
 
 
                 # Find the pattern in the image.
@@ -585,7 +585,7 @@ end_header
         draw = angle[0] < threshold
         if draw:
             cf = Configuration.Instance.Augmented.PoseEstimation(objectPoints, corners, cubeFace, cameraMatrix, distCoeffs)
-            Configuration.Instance.Augmented.ShadeFace(image, cubeFace, shadeFace, cf, corners)
+            Configuration.Instance.Augmented.ShaqdeFace(image, cubeFace, shadeFace, cf, corners)
 
 
     def calculateTexture(self, cubeFace, objectPoints, corners, cameraMatrix, distCoeffs, image, texture, threshold):
