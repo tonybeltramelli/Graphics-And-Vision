@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+
+__init__.py
+
+# Image / video files
+bergar/Images/
+bergar/Classes/
+bergar/Example/
+bergar/Videos/
+bergar/Project/InputImages/
+
+bergar/Videos/
+
+.idea/
+

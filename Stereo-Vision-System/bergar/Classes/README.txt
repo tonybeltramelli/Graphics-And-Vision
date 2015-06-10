@@ -1,0 +1,1 @@
+You can open this file with Astah (http://www.astah.net).
