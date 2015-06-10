@@ -4,7 +4,7 @@ Graphics And Vision
 Student project Spring 2015 - [IT University of Copenhagen](www.itu.dk/en)
 
 * Eye-Tracking-System: Basic image analysis and image processing pipeline for eye tracking
-* Projective-Geometry: Projective geometry with homography
+* Projective-Geometry: Projective geometry with homography and augmented reality
 * Stereo-Vision-System: Basic stereo vision system and epipolar geometry
 
 ##Note
