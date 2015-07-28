@@ -10,6 +10,9 @@ Student project Spring 2015 - [IT University of Copenhagen](http://www.itu.dk/en
 ##Note
 This project explored the different techniques used to implement experimental computer graphics and computer vision systems. While the implementation is satisfying in an academic context, it is nevertheless not suitable for deployment in a real-life context because of performance issues (algorithmic optimization was not part of the scope of this project).
 
+##Dependencies
+Implemented for and tested with Python 2.7
+
 <img alt="Eye Tracking" src="Eye-Tracking-System/eye-tracking.jpg"/>
 <img alt="Projection" src="Projective-Geometry/projection.jpg"/>
 <img alt="Epipolar Lines" src="Stereo-Vision-System/epipolar-lines.jpg"/>
